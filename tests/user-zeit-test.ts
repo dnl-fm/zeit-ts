@@ -148,10 +148,11 @@ Deno.test("UserZeit - nextCycle", () => {
   assertEquals(nextCycle.durationInDays, Math.round(endOfNextMonth.diff(startOfNextMonth, 'days').days), 'Days in next cycle');
 });
 
-const now = DateTime.fromISO("2024-10-13T17:31:00").setZone(userZone);
+const startDate = DateTime.fromISO("2024-05-13T17:31:00").setZone(userZone);
+const now = DateTime.fromISO("2024-10-15T00:00:00").setZone(userZone);
 
 Deno.test("UserZeit - currentCycle (based on current date)", () => {
-  const userZeit = new UserZeit(now);
+  const userZeit = new UserZeit(startDate, now);
   const currentCycle = userZeit.currentCycle();
 
   assertEquals(currentCycle.startsAt.getZeit().toISO(), "2024-10-13T17:31:00.000+02:00", 'Start of current cycle');
@@ -160,7 +161,7 @@ Deno.test("UserZeit - currentCycle (based on current date)", () => {
 });
 
 Deno.test("UserZeit - nextCycle (based on current date)", () => {
-  const userZeit = new UserZeit(now);
+  const userZeit = new UserZeit(startDate, now);
   const nextCycle = userZeit.nextCycle();
 
   assertEquals(nextCycle.startsAt.getZeit().toISO(), "2024-11-13T17:31:00.000+01:00", 'Start of next cycle');
@@ -169,20 +170,20 @@ Deno.test("UserZeit - nextCycle (based on current date)", () => {
 });
 
 Deno.test("UserZeit - currentCycle; YEARLY interval (based on current date)", () => {
-  const userZeit = new UserZeit(now);
+  const userZeit = new UserZeit(startDate, now);
   const currentCycle = userZeit.currentCycle('YEARLY');
 
-  assertEquals(currentCycle.startsAt.getZeit().toISO(), "2024-10-13T17:31:00.000+02:00", 'Start of current cycle');
-  assertEquals(currentCycle.endsAt.getZeit().toISO(), "2025-10-13T17:30:59.999+02:00", 'End of current cycle');
+  assertEquals(currentCycle.startsAt.getZeit().toISO(), "2024-05-13T17:31:00.000+02:00", 'Start of current cycle');
+  assertEquals(currentCycle.endsAt.getZeit().toISO(), "2025-05-13T17:30:59.999+02:00", 'End of current cycle');
   assertEquals(currentCycle.durationInDays, 365, 'Days in current cycle');
 });
 
 Deno.test("UserZeit - nextCycle; YEARLY interval (based on current date)", () => {
-  const userZeit = new UserZeit(now);
+  const userZeit = new UserZeit(startDate, now);
   const nextCycle = userZeit.nextCycle('YEARLY');
 
-  assertEquals(nextCycle.startsAt.getZeit().toISO(), "2025-10-13T17:31:00.000+02:00", 'Start of next cycle');
-  assertEquals(nextCycle.endsAt.getZeit().toISO(), "2026-10-13T17:30:59.999+02:00", 'End of next cycle');
+  assertEquals(nextCycle.startsAt.getZeit().toISO(), "2025-05-13T17:31:00.000+02:00", 'Start of next cycle');
+  assertEquals(nextCycle.endsAt.getZeit().toISO(), "2026-05-13T17:30:59.999+02:00", 'End of next cycle');
   assertEquals(nextCycle.durationInDays, 365, 'Days in next cycle');
 });
 

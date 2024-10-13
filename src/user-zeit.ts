@@ -13,7 +13,7 @@ export class UserZeit {
    * Creates a new UserZeit instance.
    * @param dateTime The Luxon DateTime object representing the time in the user's timezone.
    */
-  constructor(private dateTime: DateTime) {}
+  constructor(private dateTime: DateTime, private now?: DateTime) {}
 
   /**
    * Gets the Luxon DateTime object for this UserZeit.
@@ -113,7 +113,7 @@ export class UserZeit {
    * @returns A Period object representing the previous cycle.
    */
   previousCycle(interval: Interval = 'MONTHLY'): Period {
-    const now = DateTime.now().setZone(this.getTimezone());
+    const now = this.getNow();
     const previousIntervalDate = interval === 'MONTHLY' ? now.minus({ months: 1 }) : now.minus({ years: 1 });
     return this.cyclesUntil(previousIntervalDate.toISO() as string, { interval }).getLastPeriod();
   }
@@ -124,7 +124,7 @@ export class UserZeit {
    * @returns A Period object representing the current cycle.
    */
   currentCycle(interval: Interval = 'MONTHLY'): Period {
-    const now = DateTime.now().setZone(this.getTimezone());
+    const now = this.getNow();
     return this.cyclesUntil(now.toISO() as string, { interval }).getLastPeriod();
   }
 
@@ -134,9 +134,15 @@ export class UserZeit {
    * @returns A Period object representing the next cycle.
    */
   nextCycle(interval: Interval = 'MONTHLY'): Period {
-    const now = DateTime.now().setZone(this.getTimezone());
+    const now = this.getNow();
     const nextIntervalDate = interval === 'MONTHLY' ? now.plus({ months: 1 }) : now.plus({ years: 1 });
     return this.cyclesUntil(nextIntervalDate.toISO() as string, { interval }).getLastPeriod();
+  }
+
+  private getNow(): DateTime {
+    const now = this.now ?? DateTime.now().setZone(this.getTimezone());
+    assertEquals(now.isValid, true, 'Invalid date');
+    return now;
   }
 
   /**
