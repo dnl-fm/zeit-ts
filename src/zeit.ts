@@ -4,7 +4,7 @@ import { DateTime } from './luxon-proxy.ts';
 import { Timezone, type TimezoneSchema } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
 
-const dateTimeStringSchema = z.string().datetime();
+const dateTimeStringSchema: z.ZodType<string> = z.string().datetime();
 export type ZeitSchema = z.infer<typeof dateTimeStringSchema>;
 export type Period = { startsAt: UserZeit; endsAt: UserZeit; durationInDays: number };
 export type Interval = 'MONTHLY' | 'YEARLY';

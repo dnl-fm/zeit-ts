@@ -1,27 +1,14 @@
 {
   "version": "4",
   "specifiers": {
-    "jsr:@nhttp/nhttp@^2.0.2": "2.0.2",
-    "jsr:@nhttp/zod@*": "2.0.2",
     "jsr:@std/assert@*": "1.0.6",
+    "jsr:@std/assert@1": "1.0.6",
     "jsr:@std/internal@^1.0.4": "1.0.4",
-    "npm:@types/luxon@*": "3.4.2",
-    "npm:@types/node@*": "22.5.4",
-    "npm:luxon@*": "3.5.0",
-    "npm:ts-luxon@*": "5.0.7-beta.0",
-    "npm:zod@3.23.8": "3.23.8"
+    "npm:@types/luxon@3": "3.4.2",
+    "npm:luxon@3": "3.5.0",
+    "npm:zod@3": "3.23.8"
   },
   "jsr": {
-    "@nhttp/nhttp@2.0.2": {
-      "integrity": "3f792cf5681c56d10e6fafa6c1c5f438b45dcba8037b08d5e593771aa6b3ebf8"
-    },
-    "@nhttp/zod@2.0.2": {
-      "integrity": "56179ebb1402512e95a783773bdcc84f35414121ed445d6286719e81b580c8f1",
-      "dependencies": [
-        "jsr:@nhttp/nhttp",
-        "npm:zod"
-      ]
-    },
     "@std/assert@1.0.6": {
       "integrity": "1904c05806a25d94fe791d6d883b685c9e2dcd60e4f9fc30f4fc5cf010c72207",
       "dependencies": [
@@ -36,20 +23,8 @@
     "@types/luxon@3.4.2": {
       "integrity": "sha512-TifLZlFudklWlMBfhubvgqTXRzLDI5pCbGa4P8a3wPyUQSW+1xQ5eDsreP9DWHX3tjq1ke96uYG/nwundroWcA=="
     },
-    "@types/node@22.5.4": {
-      "integrity": "sha512-FDuKUJQm/ju9fT/SeX/6+gBzoPzlVCzfzmGkwKvRHQVxi4BntVbyIwf6a4Xn62mrvndLiml6z/UBXIdEVjQLXg==",
-      "dependencies": [
-        "undici-types"
-      ]
-    },
     "luxon@3.5.0": {
       "integrity": "sha512-rh+Zjr6DNfUYR3bPwJEnuwDdqMbxZW7LOQfUN4B54+Cl+0o5zaU9RJ6bcidfDtC1cWCZXQ+nvX8bf6bAji37QQ=="
-    },
-    "ts-luxon@5.0.7-beta.0": {
-      "integrity": "sha512-mmBCXl8MXqeZ24pKcdORJShvgSNq9Eb7MD5++w+/gjERu8yJn02mhpDf/gDK9YAZiWuppRLivgPV1ipRjlFuvg=="
-    },
-    "undici-types@6.19.8": {
-      "integrity": "sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw=="
     },
     "zod@3.23.8": {
       "integrity": "sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g=="
@@ -57,9 +32,9 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@nhttp/zod@*",
-      "jsr:@std/assert@*",
-      "npm:luxon@*"
+      "jsr:@std/assert@1",
+      "npm:luxon@3",
+      "npm:zod@3"
     ]
   }
 }

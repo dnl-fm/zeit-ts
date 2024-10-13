@@ -387,7 +387,7 @@ export const Timezone = {
  * A Zod schema for validating time zone strings.
  * It ensures that only valid time zones from the Timezone object are accepted.
  */
-export const TimezoneSchema = z.union([
+export const TimezoneSchema: z.ZodType<string> = z.union([
   // Africa
   z.literal(Timezone.Africa.Abidjan),
   z.literal(Timezone.Africa.Accra),

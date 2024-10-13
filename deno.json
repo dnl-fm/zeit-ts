@@ -4,9 +4,9 @@
   "description": "Helps syncing/reading user dates in your database",
   "exports": "./mod.ts",
   "imports": {
-    "zod": "jsr:@nhttp/zod",
-    "luxon": "npm:luxon",
-    "assert": "jsr:@std/assert"
+    "zod": "npm:zod@^3.0.0",
+    "luxon": "npm:luxon@^3.0.0",
+    "assert": "jsr:@std/assert@^1.0.0"
   },
   "tasks": {
     "test": "deno test --parallel"
