@@ -125,6 +125,7 @@ export class UserZeit {
    */
   currentCycle(interval: Interval = 'MONTHLY'): Period {
     const now = this.getNow();
+    console.log(now.toISO(), this.now?.toISO());
     return this.cyclesUntil(now.toISO() as string, { interval }).getLastPeriod();
   }
 
@@ -141,7 +142,6 @@ export class UserZeit {
 
   private getNow(): DateTime {
     const now = this.now ?? DateTime.fromISO(DateTime.now().toISO(), { zone: this.getTimezone() });
-    console.log(now, this.now);
     assertEquals(now.isValid, true, 'Invalid date');
     return now;
   }
