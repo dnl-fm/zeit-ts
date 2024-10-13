@@ -5,6 +5,18 @@ import { Timezone } from "../src/timezone.ts";
 
 const userZone = Timezone.Europe.Berlin;
 
+Deno.test("UserZeit - set different day", () => {
+  const userZeit = Zeit.user("2024-01-30T10:34:12", userZone);
+  const newUserZeit = userZeit.set({ day: 28 });
+  assertEquals(newUserZeit.toISO(), "2024-01-28T10:34:12.000+01:00");
+});
+
+Deno.test("UserZeit - set time to midnight", () => {
+  const userZeit = Zeit.user("2024-01-30T10:34:12", userZone);
+  const newUserZeit = userZeit.set({ hour:0, minute:0, second:0, millisecond:0 });
+  assertEquals(newUserZeit.toISO(), "2024-01-30T00:00:00.000+01:00");
+});
+
 Deno.test("UserZeit - Cycles with edge cases", () => {
   const userZone = Timezone.Europe.London;
   const zeit = Zeit.withUserZone(userZone);

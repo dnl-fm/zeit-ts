@@ -1,4 +1,5 @@
 import { assertEquals } from 'assert/equals';
+import type { DateObjectUnits } from 'npm:@types/luxon@3';
 import { DateTime } from './luxon-proxy.ts';
 import { Timezone } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
@@ -13,6 +14,11 @@ export class DatabaseZeit {
    * @param userTimezone The user's timezone.
    */
   constructor(private dateTime: DateTime, private userTimezone: Timezone) {}
+
+  set(values: DateObjectUnits) {
+    this.dateTime = this.getZeit().set(values);
+    return this;
+  }
 
   /**
    * Gets the Luxon DateTime object for this DatabaseZeit.
