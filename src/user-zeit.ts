@@ -125,7 +125,6 @@ export class UserZeit {
    */
   currentCycle(interval: Interval = 'MONTHLY'): Period {
     const now = this.getNow();
-    console.log(now.toISO(), this.now?.toISO());
     return this.cyclesUntil(now.toISO() as string, { interval }).getLastPeriod();
   }
 
