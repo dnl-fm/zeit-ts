@@ -13,9 +13,15 @@ export class UserZeit {
   /**
    * Creates a new UserZeit instance.
    * @param dateTime The Luxon DateTime object representing the time in the user's timezone.
+   * @param now Optional DateTime object representing the current time. If not provided, the current time will be used when needed.
    */
   constructor(private dateTime: DateTime, private now?: DateTime) {}
 
+  /**
+   * Sets specified components of the date/time.
+   * @param values An object containing the components to set and their values.
+   * @returns This UserZeit instance for method chaining.
+   */
   set(values: DateObjectUnits) {
     this.dateTime = this.getZeit().set(values);
     return this;
@@ -85,9 +91,9 @@ export class UserZeit {
    * Generates cycles starting from this UserZeit.
    * @param numberOfCycles The number of cycles to generate.
    * @param options Options for cycle generation.
-   * @param options.interval The interval for cycle generation (default: 'MONTHLY').
-   * @param [options.startsAt] Optional start date for the cycles.
-   * @returns A new Cycles instance.
+   * @param options.interval The interval for cycle generation ('MONTHLY' or 'YEARLY').
+   * @param [options.startsAt] Optional start date for the cycles. If not provided, the current UserZeit is used as the start date.
+   * @returns A new Cycles instance containing the generated cycles.
    */
   cycles(numberOfCycles: number, options: { interval: Interval; startsAt?: ZeitSchema } = { interval: 'MONTHLY' }): Cycles {
     const periods: Period[] = [];
@@ -147,7 +153,7 @@ export class UserZeit {
 
   /**
    * Gets the previous cycle based on the current date.
-   * @param interval The interval for cycle calculation (default: 'MONTHLY').
+   * @param interval The interval for cycle calculation ('MONTHLY' or 'YEARLY', default: 'MONTHLY').
    * @returns A Period object representing the previous cycle.
    */
   previousCycle(interval: Interval = 'MONTHLY'): Period {
@@ -180,6 +186,7 @@ export class UserZeit {
   /**
    * Gets the current DateTime, either from the stored 'now' value or creates a new one.
    * @returns A DateTime object representing the current time in the user's timezone.
+   * @throws {Error} If the resulting date is invalid.
    * @private
    */
   private getNow(): DateTime {

@@ -11,10 +11,15 @@ export class DatabaseZeit {
   /**
    * Creates a new DatabaseZeit instance.
    * @param dateTime The Luxon DateTime object representing the time in UTC.
-   * @param userTimezone The user's timezone.
+   * @param userTimezone The user's timezone, used when converting back to UserZeit.
    */
   constructor(private dateTime: DateTime, private userTimezone: Timezone) {}
 
+  /**
+   * Sets specified components of the date/time.
+   * @param values An object containing the components to set and their values.
+   * @returns This DatabaseZeit instance for method chaining.
+   */
   set(values: DateObjectUnits) {
     this.dateTime = this.getZeit().set(values);
     return this;
@@ -22,7 +27,7 @@ export class DatabaseZeit {
 
   /**
    * Gets the Luxon DateTime object for this DatabaseZeit.
-   * @returns The Luxon DateTime object.
+   * @returns The Luxon DateTime object in UTC.
    */
   getZeit(): DateTime {
     return this.dateTime;
