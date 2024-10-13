@@ -89,7 +89,7 @@ export class Zeit {
    * @private
    */
   private fromDate(date: Date): DateTime {
-    const dateTime = DateTime.fromJSDate(date).setZone(this.timezone);
+    const dateTime = DateTime.fromJSDate(date, { zone: this.timezone });
     assertEquals(dateTime.isValid, true, 'Invalid date');
     return dateTime;
   }

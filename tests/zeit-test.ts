@@ -9,7 +9,7 @@ Deno.test("Zeit - shortUser", () => {
   const userDateString = "2024-01-30T10:00:00";
   assertEquals(Zeit.user(userDateString, userZone).toISO(), `${userDateString}.000+01:00`, 'fromString');
 
-  const userDate = new Date("2024-01-30T10:00:00");
+  const userDate = new Date("2024-01-30T09:00:00Z");
   assertEquals(Zeit.user(userDate, userZone).toISO(), "2024-01-30T10:00:00.000+01:00", 'fromDate');
 });
 
