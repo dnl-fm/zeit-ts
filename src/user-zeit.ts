@@ -140,7 +140,7 @@ export class UserZeit {
   }
 
   private getNow(): DateTime {
-    const now = this.now ?? DateTime.now().setZone(this.getTimezone());
+    const now = this.now ?? DateTime.fromISO(DateTime.now().toISO(), { zone: this.getTimezone() });
     console.log(now, this.now);
     assertEquals(now.isValid, true, 'Invalid date');
     return now;
