@@ -9,13 +9,13 @@ import type { Period, ZeitSchema } from './zeit.ts';
 export class Cycles {
   /**
    * Creates a new Cycles instance.
-   * @param periods An array of Period objects.
+   * @param periods - An array of Period objects representing the time cycles.
    */
   constructor(private periods: Period[]) {}
 
   /**
    * Creates a new Cycles instance from an array of periods.
-   * @param periods An array of Period objects.
+   * @param periods - An array of Period objects.
    * @returns A new Cycles instance.
    */
   static fromPeriods(periods: Period[]): Cycles {
@@ -23,7 +23,7 @@ export class Cycles {
   }
 
   /**
-   * Gets all periods in this Cycles instance.
+   * Retrieves all periods in this Cycles instance.
    * @returns An array of Period objects.
    */
   getPeriods(): Period[] {
@@ -31,7 +31,7 @@ export class Cycles {
   }
 
   /**
-   * Gets the number of periods in this Cycles instance.
+   * Gets the total number of periods in this Cycles instance.
    * @returns The number of periods.
    */
   getNumberOfPeriods(): number {
@@ -39,7 +39,7 @@ export class Cycles {
   }
 
   /**
-   * Gets the first period in this Cycles instance.
+   * Retrieves the first period in this Cycles instance.
    * @returns The first Period object.
    * @throws {Error} If there are no periods in the Cycles instance.
    */
@@ -51,7 +51,7 @@ export class Cycles {
   }
 
   /**
-   * Gets the last period in this Cycles instance.
+   * Retrieves the last period in this Cycles instance.
    * @returns The last Period object.
    * @throws {Error} If there are no periods in the Cycles instance.
    */
@@ -64,11 +64,14 @@ export class Cycles {
 
   /**
    * Finds the period that contains the given date.
-   * @param zeit The date to search for, as a ZeitSchema.
+   * @param zeit - The date to search for, as a ZeitSchema. If not provided, the current date and time will be used.
    * @returns The Period object containing the date.
    * @throws {Error} If no period is found containing the given date.
    */
-  findPeriod(zeit: ZeitSchema): Period {
+  findPeriod(zeit?: ZeitSchema): Period {
+    if (!zeit) {
+      zeit = this.getCurrentDateTime().toISO() as string;
+    }
     const userZeit = this.getUserZeit(zeit);
     const period = this.periods.find((period) =>
       period.startsAt.getZeit() <= userZeit.getZeit() &&
@@ -80,11 +83,14 @@ export class Cycles {
 
   /**
    * Finds the nearest period before the given date.
-   * @param zeit The reference date, as a ZeitSchema.
+   * @param zeit - The reference date, as a ZeitSchema. If not provided, the current date and time will be used.
    * @returns The nearest Period object before the date.
    * @throws {Error} If no period is found before the given date.
    */
-  findBefore(zeit: ZeitSchema): Period {
+  findBefore(zeit?: ZeitSchema): Period {
+    if (!zeit) {
+      zeit = this.getCurrentDateTime().toISO() as string;
+    }
     const userZeit = this.getUserZeit(zeit);
     const period = this.periods.reverse().find((period) => period.endsAt.getZeit() < userZeit.getZeit());
     assertNotEquals(period, undefined, 'Period not found');
@@ -93,11 +99,14 @@ export class Cycles {
 
   /**
    * Finds the nearest period after the given date.
-   * @param zeit The reference date, as a ZeitSchema.
+   * @param zeit - The reference date, as a ZeitSchema. If not provided, the current date and time will be used.
    * @returns The nearest Period object after the date.
    * @throws {Error} If no period is found after the given date.
    */
-  findAfter(zeit: ZeitSchema): Period {
+  findAfter(zeit?: ZeitSchema): Period {
+    if (!zeit) {
+      zeit = this.getCurrentDateTime().toISO() as string;
+    }
     const userZeit = this.getUserZeit(zeit);
     const period = this.periods.find((period) => period.startsAt.getZeit() > userZeit.getZeit());
     assertNotEquals(period, undefined, 'Period not found');
@@ -106,12 +115,21 @@ export class Cycles {
 
   /**
    * Converts a ZeitSchema to a UserZeit object.
-   * @param zeit The ZeitSchema to convert.
+   * @param zeit - The ZeitSchema to convert.
    * @returns A UserZeit object.
    * @private
    */
   private getUserZeit(zeit: ZeitSchema): UserZeit {
     const dateTime = DateTime.fromISO(zeit, { zone: this.periods[0].startsAt.getTimezone() });
     return new UserZeit(dateTime);
+  }
+
+  /**
+   * Gets the current date and time in the timezone of the first period.
+   * @returns A DateTime object representing the current date and time.
+   * @private
+   */
+  private getCurrentDateTime(): DateTime {
+    return DateTime.now().setZone(this.periods[0].startsAt.getTimezone());
   }
 }

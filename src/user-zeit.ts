@@ -25,7 +25,7 @@ export class UserZeit {
 
   /**
    * Gets the timezone of this UserZeit.
-   * @returns The timezone.
+   * @returns The timezone as a Timezone enum value.
    */
   getTimezone(): Timezone {
     return this.dateTime.zone.name as Timezone;
@@ -48,23 +48,35 @@ export class UserZeit {
    * @param numberOfCycles The number of cycles to generate.
    * @param options Options for cycle generation.
    * @param options.interval The interval for cycle generation (default: 'MONTHLY').
+   * @param [options.startsAt] Optional start date for the cycles.
    * @returns A new Cycles instance.
    */
-  cycles(numberOfCycles: number, options: { interval: Interval } = { interval: 'MONTHLY' }): Cycles {
+  cycles(numberOfCycles: number, options: { interval: Interval; startsAt?: ZeitSchema } = { interval: 'MONTHLY' }): Cycles {
     const periods: Period[] = [];
 
     for (let i = 0; i < numberOfCycles; i++) {
-      const startsAt = this.cycleStartsAt(options.interval, i);
-      const endsAt = this.cycleEndsAt(options.interval, i);
-
-      periods.push({
-        startsAt,
-        endsAt,
-        in_days: endsAt.getZeit().diff(startsAt.getZeit(), 'days').days,
-      });
+      const startsAt = this.cycleStartsAt(options.interval, i, options.startsAt);
+      const endsAt = this.cycleEndsAt(options.interval, i, options.startsAt);
+      periods.push(this.buildPeriod(startsAt, endsAt));
     }
 
     return Cycles.fromPeriods(periods);
+  }
+
+  /**
+   * Generates cycles starting from a specified date.
+   * @param startsAt The start date for cycle generation.
+   * @param numberOfCycles The number of cycles to generate.
+   * @param options Options for cycle generation.
+   * @param options.interval The interval for cycle generation (default: 'MONTHLY').
+   * @returns A new Cycles instance.
+   */
+  cyclesFrom(startsAt: ZeitSchema, numberOfCycles: number, options: { interval: Interval } = { interval: 'MONTHLY' }): Cycles {
+    const startsAtZeit = DateTime.fromISO(startsAt, { zone: this.getTimezone() });
+    const validCycles = this.cyclesUntil(startsAt, { interval: options.interval });
+    const isValid = validCycles.getPeriods().some((period) => period.startsAt.getZeit().equals(startsAtZeit));
+    assertEquals(isValid, true, 'Invalid start date');
+    return this.cycles(numberOfCycles, { ...options, startsAt });
   }
 
   /**
@@ -83,12 +95,7 @@ export class UserZeit {
       const startsAt = this.cycleStartsAt(options.interval, i);
       const endsAt = this.cycleEndsAt(options.interval, i);
 
-      const period = {
-        startsAt,
-        endsAt,
-        in_days: endsAt.getZeit().diff(startsAt.getZeit(), 'days').days,
-      };
-
+      const period = this.buildPeriod(startsAt, endsAt);
       periods.push(period);
 
       if (period.endsAt.getZeit() >= untilZeit) {
@@ -101,17 +108,48 @@ export class UserZeit {
   }
 
   /**
+   * Gets the previous cycle based on the current date.
+   * @param interval The interval for cycle calculation (default: 'MONTHLY').
+   * @returns A Period object representing the previous cycle.
+   */
+  previousCycle(interval: Interval = 'MONTHLY'): Period {
+    const now = DateTime.now().setZone(this.getTimezone());
+    const previousIntervalDate = interval === 'MONTHLY' ? now.minus({ months: 1 }) : now.minus({ years: 1 });
+    return this.cyclesUntil(previousIntervalDate.toISO() as string, { interval }).getLastPeriod();
+  }
+
+  /**
+   * Gets the current cycle based on the current date.
+   * @param interval The interval for cycle calculation (default: 'MONTHLY').
+   * @returns A Period object representing the current cycle.
+   */
+  currentCycle(interval: Interval = 'MONTHLY'): Period {
+    const now = DateTime.now().setZone(this.getTimezone());
+    return this.cyclesUntil(now.toISO() as string, { interval }).getLastPeriod();
+  }
+
+  /**
+   * Gets the next cycle based on the current date.
+   * @param interval The interval for cycle calculation (default: 'MONTHLY').
+   * @returns A Period object representing the next cycle.
+   */
+  nextCycle(interval: Interval = 'MONTHLY'): Period {
+    const now = DateTime.now().setZone(this.getTimezone());
+    const nextIntervalDate = interval === 'MONTHLY' ? now.plus({ months: 1 }) : now.plus({ years: 1 });
+    return this.cyclesUntil(nextIntervalDate.toISO() as string, { interval }).getLastPeriod();
+  }
+
+  /**
    * Generates a cycle start date.
    * @param interval The interval for cycle generation.
    * @param iteration The iteration number.
+   * @param [startsAt] Optional start date for the cycle.
    * @returns A new UserZeit object representing the cycle start date.
    * @throws {Error} If the resulting date is invalid.
    * @private
    */
-  private cycleStartsAt(interval: Interval, iteration: number): UserZeit {
-    const newZeit = interval === 'MONTHLY' ? this.getZeit().plus({ months: iteration }) : this.getZeit().plus({ years: iteration });
-
-    assertEquals(newZeit.isValid, true, 'Invalid date');
+  private cycleStartsAt(interval: Interval, iteration: number, startsAt?: ZeitSchema): UserZeit {
+    const newZeit = this.buildCycle(interval, iteration, startsAt);
     return new UserZeit(newZeit);
   }
 
@@ -119,14 +157,42 @@ export class UserZeit {
    * Generates a cycle end date.
    * @param interval The interval for cycle generation.
    * @param iteration The iteration number.
+   * @param [startsAt] Optional start date for the cycle.
    * @returns A new UserZeit object representing the cycle end date.
    * @throws {Error} If the resulting date is invalid.
    * @private
    */
-  private cycleEndsAt(interval: Interval, iteration: number): UserZeit {
-    const newZeit = interval === 'MONTHLY' ? this.getZeit().plus({ months: 1 + iteration }) : this.getZeit().plus({ years: 1 + iteration });
+  private cycleEndsAt(interval: Interval, iteration: number, startsAt?: ZeitSchema): UserZeit {
+    const newZeit = this.buildCycle(interval, iteration + 1, startsAt);
+    return new UserZeit(newZeit.minus({ milliseconds: 1 }));
+  }
 
+  /**
+   * Builds a Period object from start and end dates.
+   * @param startsAt The start date of the period.
+   * @param endsAt The end date of the period.
+   * @returns A Period object.
+   * @private
+   */
+  private buildPeriod(startsAt: UserZeit, endsAt: UserZeit) {
+    const durationInDays = Math.round(endsAt.getZeit().diff(startsAt.getZeit(), 'days').days);
+    return { startsAt, endsAt, durationInDays };
+  }
+
+  /**
+   * Builds a cycle DateTime object.
+   * @param interval The interval for cycle generation.
+   * @param iteration The iteration number.
+   * @param [startsAt] Optional start date for the cycle.
+   * @returns A new DateTime object representing the cycle.
+   * @throws {Error} If the resulting date is invalid.
+   * @private
+   */
+  private buildCycle(interval: Interval, iteration: number, startsAt?: ZeitSchema): DateTime {
+    let zeit = this.getZeit();
+    if (startsAt) zeit = DateTime.fromISO(startsAt, { zone: this.getTimezone() });
+    const newZeit = interval === 'MONTHLY' ? zeit.plus({ months: iteration }) : zeit.plus({ years: iteration });
     assertEquals(newZeit.isValid, true, 'Invalid date');
-    return new UserZeit(newZeit.minus({ seconds: 1 }));
+    return newZeit;
   }
 }
