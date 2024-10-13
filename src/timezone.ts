@@ -759,3 +759,5 @@ export const TimezoneSchema = z.union([
   z.literal(Timezone.GMT),
   z.literal(Timezone.UTC),
 ]);
+
+export type Timezone = z.infer<typeof TimezoneSchema>;

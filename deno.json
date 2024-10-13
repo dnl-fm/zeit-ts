@@ -8,6 +8,9 @@
     "luxon": "npm:luxon",
     "assert": "jsr:@std/assert"
   },
+  "tasks": {
+    "test": "deno test --parallel"
+  },
   "test": {
     "include": [
       "tests/*.ts"

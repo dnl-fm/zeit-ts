@@ -1,7 +1,6 @@
 import { assertEquals } from 'assert/equals';
-import { DateTime } from 'luxon';
-import { z } from 'zod';
-import type { TimezoneSchema } from './timezone.ts';
+import { DateTime } from './luxon-proxy.ts';
+import { Timezone } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
 
 /**
@@ -11,15 +10,15 @@ export class DatabaseZeit {
   /**
    * Creates a new DatabaseZeit instance.
    * @param dateTime The Luxon DateTime object representing the time in UTC.
-   * @param userZone The user's timezone.
+   * @param userTimezone The user's timezone.
    */
-  constructor(private dateTime: DateTime, private userZone: z.infer<typeof TimezoneSchema>) {}
+  constructor(private dateTime: DateTime, private userTimezone: Timezone) {}
 
   /**
    * Gets the Luxon DateTime object for this DatabaseZeit.
    * @returns The Luxon DateTime object.
    */
-  getZeit() {
+  getZeit(): DateTime {
     return this.dateTime;
   }
 
@@ -27,16 +26,17 @@ export class DatabaseZeit {
    * Gets the timezone of this DatabaseZeit (always UTC).
    * @returns The UTC timezone.
    */
-  getTimezone() {
-    return this.dateTime.zone;
+  getTimezone(): Timezone {
+    return Timezone.UTC;
   }
 
   /**
    * Converts this DatabaseZeit to a UserZeit in the user's timezone.
    * @returns A new UserZeit instance.
+   * @throws {Error} If the resulting date is invalid.
    */
-  toUser() {
-    const userZeit = this.dateTime.setZone(this.userZone);
+  toUser(): UserZeit {
+    const userZeit = this.dateTime.setZone(this.userTimezone);
     assertEquals(userZeit.isValid, true, 'Invalid date');
 
     return new UserZeit(userZeit);

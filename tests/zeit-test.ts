@@ -1,4 +1,4 @@
-import { assertEquals } from "assert/equals";
+import { assertEquals } from "jsr:@std/assert";
 import { Timezone } from "../src/timezone.ts";
 import { Zeit } from "../src/zeit.ts";
 
