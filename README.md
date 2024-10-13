@@ -175,6 +175,16 @@ DNL, short for 'Dots and Lines', is a venture created by Tino Ehrich, a seasoned
 
 ---
 
+### Credits
+
+Zeit relies on [Luxon](https://moment.github.io/luxon/), a powerful library for working with dates and times in JavaScript. We particularly leverage Luxon's robust timezone processing capabilities, which form the backbone of Zeit's timezone-aware operations.
+
+Also thanks to all the contributors of [luxon's type definitions](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/luxon).
+
+Pretty helpful stuff.
+
+---
+
 ### License
 
 Zeit.ts is free software, and is released under the terms of the [Mozilla Public License](https://www.mozilla.org/en-US/MPL/) version 2.0. See [LICENSE](LICENSE).
