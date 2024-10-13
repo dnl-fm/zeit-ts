@@ -31,6 +31,22 @@ export class DatabaseZeit {
   }
 
   /**
+   * Converts the DatabaseZeit to an ISO 8601 string.
+   * @returns The ISO 8601 string representation of the DatabaseZeit.
+   */
+  toISO(): string {
+    return this.dateTime.toISO()!;
+  }
+
+  /**
+   * Converts the DatabaseZeit to an ISO 8601 date string (without time).
+   * @returns The ISO 8601 date string representation of the DatabaseZeit.
+   */
+  toISODate(): string {
+    return this.dateTime.toISODate()!;
+  }
+
+  /**
    * Converts this DatabaseZeit to a UserZeit in the user's timezone.
    * @returns A new UserZeit instance.
    * @throws {Error} If the resulting date is invalid.
@@ -40,5 +56,21 @@ export class DatabaseZeit {
     assertEquals(userZeit.isValid, true, 'Invalid date');
 
     return new UserZeit(userZeit);
+  }
+
+  /**
+   * Converts this DatabaseZeit to a UserZeit ISO 8601 string in the user's timezone.
+   * @returns The ISO 8601 string representation of the UserZeit.
+   */
+  toUserISO(): string {
+    return this.toUser().toISO();
+  }
+
+  /**
+   * Converts this DatabaseZeit to a UserZeit ISO 8601 date string (without time) in the user's timezone.
+   * @returns The ISO 8601 date string representation of the UserZeit.
+   */
+  toUserISODate(): string {
+    return this.toUser().toISODate();
   }
 }

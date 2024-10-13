@@ -32,6 +32,22 @@ export class UserZeit {
   }
 
   /**
+   * Converts the UserZeit to an ISO 8601 string.
+   * @returns The ISO 8601 string representation of the UserZeit.
+   */
+  toISO(): string {
+    return this.dateTime.toISO()!;
+  }
+
+  /**
+   * Converts the UserZeit to an ISO 8601 date string (without time).
+   * @returns The ISO 8601 date string representation of the UserZeit.
+   */
+  toISODate(): string {
+    return this.dateTime.toISODate()!;
+  }
+
+  /**
    * Converts this UserZeit to a DatabaseZeit in UTC.
    * @returns A new DatabaseZeit instance.
    * @throws {Error} If the resulting date is invalid.
@@ -41,6 +57,22 @@ export class UserZeit {
     assertEquals(databaseZeit.isValid, true, 'Invalid date');
 
     return new DatabaseZeit(databaseZeit, this.getTimezone());
+  }
+
+  /**
+   * Converts the UserZeit to a DatabaseZeit ISO 8601 string.
+   * @returns The ISO 8601 string representation of the DatabaseZeit.
+   */
+  toDatabaseISO(): string {
+    return this.toDatabase().toISO();
+  }
+
+  /**
+   * Converts the UserZeit to a DatabaseZeit ISO 8601 date string (without time).
+   * @returns The ISO 8601 date string representation of the DatabaseZeit.
+   */
+  toDatabaseISODate(): string {
+    return this.toDatabase().toISODate();
   }
 
   /**
@@ -139,6 +171,11 @@ export class UserZeit {
     return this.cyclesUntil(nextIntervalDate.toISO() as string, { interval }).getLastPeriod();
   }
 
+  /**
+   * Gets the current DateTime, either from the stored 'now' value or creates a new one.
+   * @returns A DateTime object representing the current time in the user's timezone.
+   * @private
+   */
   private getNow(): DateTime {
     const now = this.now ?? DateTime.fromISO(DateTime.now().toISO(), { zone: this.getTimezone() });
     assertEquals(now.isValid, true, 'Invalid date');

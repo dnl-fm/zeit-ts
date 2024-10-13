@@ -1,3 +1,4 @@
+import { assertEquals } from 'assert/equals';
 import { z } from 'zod';
 import { DatabaseZeit } from './database-zeit.ts';
 import { DateTime } from './luxon-proxy.ts';
@@ -15,10 +16,24 @@ export type Interval = 'MONTHLY' | 'YEARLY';
  */
 export class Zeit {
   /**
-   * Creates a new Zeit instance.
-   * @param timezone The timezone for this Zeit instance.
+   * Creates a UserZeit instance from a Zeit schema or Date object.
+   * @param zeit The time to convert, either as a ZeitSchema string or Date object.
+   * @param zone The timezone to use for the conversion.
+   * @returns A new UserZeit instance.
    */
-  constructor(private timezone: z.infer<typeof TimezoneSchema>) {}
+  static user(zeit: ZeitSchema | Date, zone: z.infer<typeof TimezoneSchema>): UserZeit {
+    return new Zeit(zone).fromUser(zeit);
+  }
+
+  /**
+   * Creates a DatabaseZeit instance from a Zeit schema or Date object.
+   * @param zeit The time to convert, either as a ZeitSchema string or Date object.
+   * @param zone The timezone to use for the conversion.
+   * @returns A new DatabaseZeit instance.
+   */
+  static database(zeit: ZeitSchema | Date, zone: z.infer<typeof TimezoneSchema>): DatabaseZeit {
+    return new Zeit(zone).fromDatabase(zeit);
+  }
 
   /**
    * Creates a new Zeit instance with the specified user timezone.
@@ -30,21 +45,20 @@ export class Zeit {
   }
 
   /**
-   * Creates a new UserZeit instance with the specified user time and timezone.
-   * @param userZeit The user's time as a string in ISO 8601 format.
-   * @param zone The user's timezone.
-   * @returns A new UserZeit instance.
+   * Creates a new Zeit instance.
+   * @param timezone The timezone for this Zeit instance.
    */
-  static withUserZeit(userZeit: ZeitSchema, zone: z.infer<typeof TimezoneSchema>): UserZeit {
-    return new Zeit(zone).fromUser(userZeit);
-  }
+  constructor(private timezone: z.infer<typeof TimezoneSchema>) {}
 
   /**
    * Creates a UserZeit instance from a user time string.
    * @param zeit The user's time as a string in ISO 8601 format.
    * @returns A new UserZeit instance.
    */
-  fromUser(zeit: ZeitSchema): UserZeit {
+  fromUser(zeit: ZeitSchema | Date): UserZeit {
+    if (zeit instanceof Date) {
+      zeit = this.fromDate(zeit).toISO()!;
+    }
     return new UserZeit(this.getLuxonDateTime(zeit, this.timezone));
   }
 
@@ -53,7 +67,10 @@ export class Zeit {
    * @param zeit The database time as a string in ISO 8601 format.
    * @returns A new DatabaseZeit instance.
    */
-  fromDatabase(zeit: ZeitSchema): DatabaseZeit {
+  fromDatabase(zeit: ZeitSchema | Date): DatabaseZeit {
+    if (zeit instanceof Date) {
+      zeit = this.fromDate(zeit).toISO()!;
+    }
     return new DatabaseZeit(this.getLuxonDateTime(zeit, Timezone.UTC), this.timezone);
   }
 
@@ -63,6 +80,18 @@ export class Zeit {
    */
   getTimezone(): z.infer<typeof TimezoneSchema> {
     return this.timezone;
+  }
+
+  /**
+   * Converts a JavaScript Date object to a Luxon DateTime object.
+   * @param date The JavaScript Date object to convert.
+   * @returns A Luxon DateTime object in the Zeit instance's timezone.
+   * @private
+   */
+  private fromDate(date: Date): DateTime {
+    const dateTime = DateTime.fromJSDate(date).setZone(this.timezone);
+    assertEquals(dateTime.isValid, true, 'Invalid date');
+    return dateTime;
   }
 
   /**
