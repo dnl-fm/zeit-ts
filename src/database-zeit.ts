@@ -20,7 +20,7 @@ export class DatabaseZeit {
    * @param values An object containing the components to set and their values.
    * @returns This DatabaseZeit instance for method chaining.
    */
-  set(values: DateObjectUnits) {
+  set(values: DateObjectUnits): DatabaseZeit {
     this.dateTime = this.getZeit().set(values);
     return this;
   }

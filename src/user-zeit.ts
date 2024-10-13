@@ -22,7 +22,7 @@ export class UserZeit {
    * @param values An object containing the components to set and their values.
    * @returns This UserZeit instance for method chaining.
    */
-  set(values: DateObjectUnits) {
+  set(values: DateObjectUnits): UserZeit {
     this.dateTime = this.getZeit().set(values);
     return this;
   }
