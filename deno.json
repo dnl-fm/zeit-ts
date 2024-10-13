@@ -1,7 +1,7 @@
 {
-  "name": "@dnl-fm/period",
+  "name": "@dnl-fm/zeit-ts",
   "version": "0.1.0",
-  "description": "Lightweight TypeScript utility for handling periods of time",
+  "description": "Helps syncing/reading user dates in your database",
   "exports": "./mod.ts",
   "imports": {
     "zod": "jsr:@nhttp/zod",
