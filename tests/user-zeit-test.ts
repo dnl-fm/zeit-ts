@@ -148,8 +148,8 @@ Deno.test("UserZeit - nextCycle", () => {
   assertEquals(nextCycle.durationInDays, Math.round(endOfNextMonth.diff(startOfNextMonth, 'days').days), 'Days in next cycle');
 });
 
-const startDate = DateTime.fromISO("2024-05-13T17:31:00").setZone(userZone);
-const now = DateTime.fromISO("2024-10-15T00:00:00").setZone(userZone);
+const startDate = DateTime.fromISO("2024-05-13T17:31:00", { zone: userZone });
+const now = DateTime.fromISO("2024-10-15T00:00:00", {zone: userZone});
 
 Deno.test("UserZeit - currentCycle (based on current date)", () => {
   const userZeit = new UserZeit(startDate, now);
