@@ -1,0 +1,37 @@
+{
+  "name": "@dnl-fm/period",
+  "version": "0.1.0",
+  "description": "Lightweight TypeScript utility for handling periods of time",
+  "exports": "./mod.ts",
+  "imports": {
+    "zod": "jsr:@nhttp/zod",
+    "luxon": "npm:luxon",
+    "assert": "jsr:@std/assert"
+  },
+  "test": {
+    "include": [
+      "tests/*.ts"
+    ]
+  },
+  "lint": {
+    "include": [
+      "src/"
+    ],
+    "rules": {
+      "tags": [
+        "recommended"
+      ]
+    }
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 250,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": true,
+    "proseWrap": "preserve",
+    "include": [
+      "src/"
+    ]
+  }
+}
