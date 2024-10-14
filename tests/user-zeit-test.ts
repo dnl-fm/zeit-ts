@@ -109,7 +109,7 @@ Deno.test("UserZeit - CyclesFrom (valid start date)", () => {
   const zeit = Zeit.forTimezone(userZone);
   const baseDate = zeit.fromUser("2024-03-15T09:00:00");
 
-  const startDate = "2024-05-15T09:00:00";
+  const startDate = zeit.fromUser("2024-05-15T09:00:00");
   const cycles = baseDate.cyclesFrom(startDate, 3, { interval: "MONTHLY" });
   const periods = cycles.getPeriods();
 
@@ -127,7 +127,7 @@ Deno.test("UserZeit - CyclesFrom (invalid start date)", () => {
   const userZone = Timezone.America.Chicago;
   const zeit = Zeit.forTimezone(userZone);
   const baseDate = zeit.fromUser("2024-03-15T09:00:00");
-  const startDate = "2024-05-01T09:00:00";
+  const startDate = zeit.fromUser("2024-05-01T09:00:00");
 
   assertThrows(() => {
     baseDate.cyclesFrom(startDate, 3, { interval: "MONTHLY" });
@@ -176,6 +176,38 @@ Deno.test("UserZeit - nextCycle", () => {
   assertEquals(nextCycle.startsAt.getZeit().toISO(), startOfNextMonth.toISO(), 'Start of next cycle');
   assertEquals(nextCycle.endsAt.getZeit().toISO(), endOfNextMonth.toISO(), 'End of next cycle');
   assertEquals(nextCycle.durationInDays, Math.round(endOfNextMonth.diff(startOfNextMonth, 'days').days), 'Days in next cycle');
+});
+
+Deno.test('UserZeit - nextCycle with startsAt option', () => {
+  const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
+  const startDateMonthly = userZoneZeit.fromUser('2023-07-10T12:00:00.000Z');
+
+  // Test nextCycle with startsAt option
+  const nextCycleWithStart = userZeit.nextCycle('MONTHLY', startDateMonthly);
+  assertEquals(nextCycleWithStart.startsAt.toISODate(), '2023-07-15', 'start monthly');
+  assertEquals(nextCycleWithStart.endsAt.toISODate(), '2023-08-15', 'end monthly');
+
+  // Test with YEARLY interval
+  const startDateYearly = userZoneZeit.fromUser('2023-06-15T12:00:00.000Z');
+  const nextYearlyCycle = userZeit.nextCycle('YEARLY', startDateYearly);
+  assertEquals(nextYearlyCycle.startsAt.toISODate(), '2024-05-15', 'start yearly');
+  assertEquals(nextYearlyCycle.endsAt.toISODate(), '2025-05-15', 'end yearly');
+});
+
+Deno.test('UserZeit - previousCycle with startsAt option', () => {
+  const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
+  const startDateMonthly = userZoneZeit.fromUser('2023-07-10T12:00:00.000Z');
+
+  // Test nextCycle with startsAt option
+  const nextCycleWithStart = userZeit.previousCycle('MONTHLY', startDateMonthly);
+  assertEquals(nextCycleWithStart.startsAt.toISODate(), '2023-05-15', 'start monthly');
+  assertEquals(nextCycleWithStart.endsAt.toISODate(), '2023-06-15', 'end monthly');
+
+  // Test with YEARLY interval
+  const startDateYearly = userZoneZeit.fromUser('2023-06-15T12:00:00.000Z');
+  const nextYearlyCycle = userZeit.previousCycle('YEARLY', startDateYearly);
+  assertEquals(nextYearlyCycle.startsAt.toISODate(), '2023-05-15', 'start yearly');
+  assertEquals(nextYearlyCycle.endsAt.toISODate(), '2024-05-15', 'end yearly');
 });
 
 const startDate = DateTime.fromISO("2024-05-13T17:31:00", { zone: userZone });
@@ -277,4 +309,98 @@ Deno.test("UserZeit - isSameOrBefore", () => {
   assertEquals(zeit1.isSameOrBefore(zeit2), false, "Later time");
   assertEquals(zeit1.isSameOrBefore(zeit3), true, "Earlier time");
   assertEquals(zeit1.isSameOrBefore(zeit1), true, "Same time");
+});
+
+Deno.test("UserZeit.sortObjects - ascending order", () => {
+  const objects = [
+    {name: "A", createdAt: userZoneZeit.fromUser("2023-05-01T10:00:00Z")},
+    {name: "B", createdAt: userZoneZeit.fromUser("2023-05-01T09:00:00Z")},
+    {name: "C", createdAt: userZoneZeit.fromUser("2023-05-01T11:00:00Z")},
+  ];
+
+  const sortedAscending = UserZeit.sortObjects(objects, 'createdAt');
+
+  assertEquals(sortedAscending.map(uz => uz.createdAt.toDatabaseISO()), [
+    "2023-05-01T09:00:00.000Z",
+    "2023-05-01T10:00:00.000Z",
+    "2023-05-01T11:00:00.000Z",
+  ]);
+});
+
+Deno.test("UserZeit.sortObjects - descending order", () => {
+  const objects = [
+    {name: "A", createdAt: userZoneZeit.fromUser("2023-05-01T10:00:00Z")},
+    {name: "B", createdAt: userZoneZeit.fromUser("2023-05-01T09:00:00Z")},
+    {name: "C", createdAt: userZoneZeit.fromUser("2023-05-01T11:00:00Z")},
+  ];
+
+  const sortedDescending = UserZeit.sortObjects(objects, 'createdAt', 'desc');
+
+  assertEquals(sortedDescending.map(uz => uz.createdAt.toDatabaseISO()), [
+    "2023-05-01T11:00:00.000Z",
+    "2023-05-01T10:00:00.000Z",
+    "2023-05-01T09:00:00.000Z",
+  ]);
+});
+
+Deno.test("UserZeit.sortObjects - fail on invalid object", () => {
+  const objects = [
+    {name: "A", createdAt: "2023-05-01T10:00:00Z"},
+    {name: "B", createdAt: userZoneZeit.fromUser("2023-05-01T09:00:00Z")},
+  ];
+
+  assertThrows(
+    () => UserZeit.sortObjects(objects, 'createdAt', 'desc'),
+    AssertionError,
+    "Property \"createdAt\" is not a UserZeit instance"
+  );
+});
+
+Deno.test("UserZeit.daysLeft - days left until another UserZeit", () => {
+  const dates = [
+    {
+      start: "2024-01-30T10:34:12",
+      end: "2024-02-28T10:34:12",
+      daysLeft: 29,
+    },
+    {
+      start: "2024-05-14T10:34:12",
+      end: "2024-05-16T10:34:12",
+      daysLeft: 2,
+    },
+    {
+      start: "2023-02-28T10:34:12",
+      end: "2024-02-29T10:34:12",
+      daysLeft: 366,
+      description: "Non-leap year to leap year"
+    },
+    {
+      start: "2024-02-29T10:34:12",
+      end: "2025-02-28T10:34:12",
+      daysLeft: 365,
+      description: "Leap year to non-leap year"
+    },
+    {
+      start: "2024-03-09T10:34:12",
+      end: "2024-03-11T10:34:12",
+      daysLeft: 2,
+      description: "Across DST start (spring forward)"
+    },
+    {
+      start: "2025-01-01T00:00:00",
+      end: "2025-01-01T00:00:00",
+      daysLeft: 0,
+      description: "New Year transition"
+    },
+];
+
+  dates.forEach((date) => {
+    const startDate = userZoneZeit.fromUser(date.start);
+    const endDate = userZoneZeit.fromUser(date.end);
+    assertEquals(
+      startDate.daysBetween(endDate),
+      date.daysLeft,
+      `${date.daysLeft} days left from ${date.start} to ${date.end}${date.description ? ` (${date.description})` : ''}`
+    );
+  });
 });
