@@ -16,31 +16,11 @@ export type ZeitInterval = 'MONTHLY' | 'YEARLY';
  */
 export class Zeit {
   /**
-   * Creates a UserZeit instance from a Zeit schema or Date object.
-   * @param zeit The time to convert, either as a ZeitSchema string or Date object.
-   * @param zone The timezone to use for the conversion.
-   * @returns A new UserZeit instance.
-   */
-  static user(zeit: ZeitSchema | Date, zone: z.infer<typeof TimezoneSchema>): UserZeit {
-    return new Zeit(zone).fromUser(zeit);
-  }
-
-  /**
-   * Creates a DatabaseZeit instance from a Zeit schema or Date object.
-   * @param zeit The time to convert, either as a ZeitSchema string or Date object.
-   * @param zone The timezone to use for the conversion.
-   * @returns A new DatabaseZeit instance.
-   */
-  static database(zeit: ZeitSchema | Date, zone: z.infer<typeof TimezoneSchema>): DatabaseZeit {
-    return new Zeit(zone).fromDatabase(zeit);
-  }
-
-  /**
    * Creates a new Zeit instance with the specified user timezone.
    * @param zone The user's timezone.
    * @returns A new Zeit instance.
    */
-  static withUserZone(zone: z.infer<typeof TimezoneSchema>): Zeit {
+  static forTimezone(zone: z.infer<typeof TimezoneSchema>): Zeit {
     return new Zeit(zone);
   }
 

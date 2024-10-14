@@ -4,22 +4,40 @@ import { DateTime } from "../src/luxon-proxy.ts";
 import { Timezone } from "../src/timezone.ts";
 
 const userZone = Timezone.Europe.Berlin;
+const userZoneZeit = Zeit.forTimezone(userZone);
+
+Deno.test("UserZeit - DST handling", () => {
+  const userZone = Timezone.America.New_York;
+  const zeit = Zeit.forTimezone(userZone);
+
+  // Before DST
+  const beforeDST = zeit.fromUser("2024-03-10T01:00:00");
+  assertEquals(beforeDST.toISO(), "2024-03-10T01:00:00.000-05:00");
+
+  // During DST transition
+  const duringDST = zeit.fromUser("2024-03-10T03:00:00");
+  assertEquals(duringDST.toISO(), "2024-03-10T03:00:00.000-04:00");
+
+  // After DST
+  const afterDST = zeit.fromUser("2024-03-10T04:00:00");
+  assertEquals(afterDST.toISO(), "2024-03-10T04:00:00.000-04:00");
+});
 
 Deno.test("UserZeit - set different day", () => {
-  const userZeit = Zeit.user("2024-01-30T10:34:12", userZone);
+  const userZeit = userZoneZeit.fromUser("2024-01-30T10:34:12");
   const newUserZeit = userZeit.set({ day: 28 });
   assertEquals(newUserZeit.toISO(), "2024-01-28T10:34:12.000+01:00");
 });
 
 Deno.test("UserZeit - set time to midnight", () => {
-  const userZeit = Zeit.user("2024-01-30T10:34:12", userZone);
-  const newUserZeit = userZeit.set({ hour:0, minute:0, second:0, millisecond:0 });
+  const userZeit = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const newUserZeit = userZeit.setToMidnight();
   assertEquals(newUserZeit.toISO(), "2024-01-30T00:00:00.000+01:00");
 });
 
 Deno.test("UserZeit - Cycles with edge cases", () => {
   const userZone = Timezone.Europe.London;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const startDate = zeit.fromUser("2024-01-30T12:00:00");
 
   const cycles = startDate.cycles(3, { interval: "MONTHLY" });
@@ -37,7 +55,7 @@ Deno.test("UserZeit - Cycles with edge cases", () => {
 
 Deno.test("UserZeit - Cycles across DST changes", () => {
   const userZone = Timezone.America.New_York;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const startDate = zeit.fromUser("2024-02-15T12:00:00");
 
   const cycles = startDate.cycles(3, { interval: "MONTHLY" });
@@ -55,7 +73,7 @@ Deno.test("UserZeit - Cycles across DST changes", () => {
 
 Deno.test("UserZeit - Cycles with year change", () => {
   const userZone = Timezone.Europe.Paris;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const startDate = zeit.fromUser("2024-12-31T23:00:00");
 
   const cycles = startDate.cycles(2, { interval: "MONTHLY" });
@@ -70,7 +88,7 @@ Deno.test("UserZeit - Cycles with year change", () => {
 
 Deno.test("UserZeit - Cycles with yearly interval", () => {
   const userZone = Timezone.Australia.Sydney;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const startDate = zeit.fromUser("2024-02-29T15:00:00");
 
   const cycles = startDate.cycles(3, { interval: "YEARLY" });
@@ -88,7 +106,7 @@ Deno.test("UserZeit - Cycles with yearly interval", () => {
 
 Deno.test("UserZeit - CyclesFrom (valid start date)", () => {
   const userZone = Timezone.America.Chicago;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const baseDate = zeit.fromUser("2024-03-15T09:00:00");
 
   const startDate = "2024-05-15T09:00:00";
@@ -107,7 +125,7 @@ Deno.test("UserZeit - CyclesFrom (valid start date)", () => {
 
 Deno.test("UserZeit - CyclesFrom (invalid start date)", () => {
   const userZone = Timezone.America.Chicago;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   const baseDate = zeit.fromUser("2024-03-15T09:00:00");
   const startDate = "2024-05-01T09:00:00";
 
@@ -119,7 +137,7 @@ Deno.test("UserZeit - CyclesFrom (invalid start date)", () => {
 const subStartsAtString = '2024-03-01';
 
 Deno.test("UserZeit - previousCycle", () => {
-  const subStartsAt = Zeit.withUserZone(userZone);
+  const subStartsAt = Zeit.forTimezone(userZone);
   const userZeit = subStartsAt.fromUser(subStartsAtString);
   const previousCycle = userZeit.previousCycle();
 
@@ -133,7 +151,7 @@ Deno.test("UserZeit - previousCycle", () => {
 });
 
 Deno.test("UserZeit - currentCycle", () => {
-  const subStartsAt = Zeit.withUserZone(userZone);
+  const subStartsAt = Zeit.forTimezone(userZone);
   const userZeit = subStartsAt.fromUser(subStartsAtString);
   const currentCycle = userZeit.currentCycle();
 
@@ -147,7 +165,7 @@ Deno.test("UserZeit - currentCycle", () => {
 });
 
 Deno.test("UserZeit - nextCycle", () => {
-  const subStartsAt = Zeit.withUserZone(userZone);
+  const subStartsAt = Zeit.forTimezone(userZone);
   const userZeit = subStartsAt.fromUser(subStartsAtString);
   const nextCycle = userZeit.nextCycle();
 
@@ -201,7 +219,7 @@ Deno.test("UserZeit - nextCycle; YEARLY interval (based on current date)", () =>
 
 Deno.test("UserZeit - cycles with leap year", () => {
   const userZone = Timezone.Europe.Berlin;
-  const zeit = Zeit.withUserZone(userZone);
+  const zeit = Zeit.forTimezone(userZone);
   
   const leapYearStart = zeit.fromUser("2024-02-29T15:00:00");
   const leapYearCycles = leapYearStart.cycles(2, { interval: "YEARLY" });
@@ -210,4 +228,53 @@ Deno.test("UserZeit - cycles with leap year", () => {
   assertEquals(leapYearPeriods[1].startsAt.getZeit().toISO(), "2025-02-28T15:00:00.000+01:00", 'Start of second leap year cycle');
 
   // TODO: Check that the duration is correct for both years
+});
+
+Deno.test("UserZeit - isSameDate", () => {
+  const zeit1 = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const zeit2 = userZoneZeit.fromUser("2024-01-30T15:00:00");
+  const zeit3 = userZoneZeit.fromUser("2024-01-31T10:34:12");
+
+  assertEquals(zeit1.isSameDate(zeit2), true, "Same date, different time");
+  assertEquals(zeit1.isSameDate(zeit3), false, "Different date");
+});
+
+Deno.test("UserZeit - isAfter", () => {
+  const zeit1 = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const zeit2 = userZoneZeit.fromUser("2024-01-30T10:34:11");
+  const zeit3 = userZoneZeit.fromUser("2024-01-30T10:34:13");
+
+  assertEquals(zeit1.isAfter(zeit2), true, "Later time");
+  assertEquals(zeit1.isAfter(zeit3), false, "Earlier time");
+  assertEquals(zeit1.isAfter(zeit1), false, "Same time");
+});
+
+Deno.test("UserZeit - isSameOrAfter", () => {
+  const zeit1 = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const zeit2 = userZoneZeit.fromUser("2024-01-30T10:34:11");
+  const zeit3 = userZoneZeit.fromUser("2024-01-30T10:34:13");
+
+  assertEquals(zeit1.isSameOrAfter(zeit2), true, "Later time");
+  assertEquals(zeit1.isSameOrAfter(zeit3), false, "Earlier time");
+  assertEquals(zeit1.isSameOrAfter(zeit1), true, "Same time");
+});
+
+Deno.test("UserZeit - isBefore", () => {
+  const zeit1 = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const zeit2 = userZoneZeit.fromUser("2024-01-30T10:34:11");
+  const zeit3 = userZoneZeit.fromUser("2024-01-30T10:34:13");
+
+  assertEquals(zeit1.isBefore(zeit2), false, "Later time");
+  assertEquals(zeit1.isBefore(zeit3), true, "Earlier time");
+  assertEquals(zeit1.isBefore(zeit1), false, "Same time");
+});
+
+Deno.test("UserZeit - isSameOrBefore", () => {
+  const zeit1 = userZoneZeit.fromUser("2024-01-30T10:34:12");
+  const zeit2 = userZoneZeit.fromUser("2024-01-30T10:34:11");
+  const zeit3 = userZoneZeit.fromUser("2024-01-30T10:34:13");
+
+  assertEquals(zeit1.isSameOrBefore(zeit2), false, "Later time");
+  assertEquals(zeit1.isSameOrBefore(zeit3), true, "Earlier time");
+  assertEquals(zeit1.isSameOrBefore(zeit1), true, "Same time");
 });

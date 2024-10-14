@@ -28,6 +28,14 @@ export class UserZeit {
   }
 
   /**
+   * Sets the time to midnight.
+   * @returns This UserZeit instance for method chaining.
+   */
+  setToMidnight(): UserZeit {
+    return this.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
+  }
+
+  /**
    * Gets the Luxon DateTime object for this UserZeit.
    * @returns The Luxon DateTime object.
    */
@@ -41,6 +49,51 @@ export class UserZeit {
    */
   getTimezone(): Timezone {
     return this.dateTime.zone.name as Timezone;
+  }
+
+  /**
+   * Checks if this UserZeit has the same date as another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if the dates are the same, false otherwise.
+   */
+  isSameDate(zeit: UserZeit): boolean {
+    return this.dateTime.hasSame(zeit.getZeit(), 'day');
+  }
+
+  /**
+   * Checks if this UserZeit is after another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is after the provided UserZeit, false otherwise.
+   */
+  isAfter(zeit: UserZeit): boolean {
+    return this.dateTime > zeit.getZeit();
+  }
+
+  /**
+   * Checks if this UserZeit is after or the same as another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is after or the same as the provided UserZeit, false otherwise.
+   */
+  isSameOrAfter(zeit: UserZeit): boolean {
+    return this.dateTime >= zeit.getZeit();
+  }
+
+  /**
+   * Checks if this UserZeit is before another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is before the provided UserZeit, false otherwise.
+   */
+  isBefore(zeit: UserZeit): boolean {
+    return this.dateTime < zeit.getZeit();
+  }
+
+  /**
+   * Checks if this UserZeit is before or the same as another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is before or the same as the provided UserZeit, false otherwise.
+   */
+  isSameOrBefore(zeit: UserZeit): boolean {
+    return this.dateTime <= zeit.getZeit();
   }
 
   /**

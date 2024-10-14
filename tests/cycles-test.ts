@@ -6,7 +6,7 @@ import { Timezone } from "../src/timezone.ts";
 import { Zeit } from "../src/zeit.ts";
 
 const userZone = Timezone.Europe.Berlin;
-const zeit = Zeit.withUserZone(userZone);
+const zeit = Zeit.forTimezone(userZone);
 
 // Keep the original createTestCycles
 function createTestCycles() {
