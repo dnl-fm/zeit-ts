@@ -1,7 +1,7 @@
 import { assertNotEquals } from 'assert/not-equals';
 import { UserZeit } from '../mod.ts';
 import { DateTime } from './luxon-proxy.ts';
-import type { Period, ZeitSchema } from './zeit.ts';
+import type { ZeitPeriod, ZeitSchema } from './zeit.ts';
 
 /**
  * Represents a collection of time periods (cycles).
@@ -11,14 +11,14 @@ export class Cycles {
    * Creates a new Cycles instance.
    * @param periods - An array of Period objects representing the time cycles.
    */
-  constructor(private periods: Period[]) {}
+  constructor(private periods: ZeitPeriod[]) {}
 
   /**
    * Creates a new Cycles instance from an array of periods.
    * @param periods - An array of Period objects.
    * @returns A new Cycles instance.
    */
-  static fromPeriods(periods: Period[]): Cycles {
+  static fromPeriods(periods: ZeitPeriod[]): Cycles {
     return new Cycles(periods);
   }
 
@@ -26,7 +26,7 @@ export class Cycles {
    * Retrieves all periods in this Cycles instance.
    * @returns An array of Period objects.
    */
-  getPeriods(): Period[] {
+  getPeriods(): ZeitPeriod[] {
     return this.periods;
   }
 
@@ -43,7 +43,7 @@ export class Cycles {
    * @returns The first Period object.
    * @throws {Error} If there are no periods in the Cycles instance.
    */
-  getFirstPeriod(): Period {
+  getFirstPeriod(): ZeitPeriod {
     if (this.periods.length === 0) {
       throw new Error('No periods in Cycles');
     }
@@ -55,7 +55,7 @@ export class Cycles {
    * @returns The last Period object.
    * @throws {Error} If there are no periods in the Cycles instance.
    */
-  getLastPeriod(): Period {
+  getLastPeriod(): ZeitPeriod {
     if (this.periods.length === 0) {
       throw new Error('No periods in Cycles');
     }
@@ -68,7 +68,7 @@ export class Cycles {
    * @returns The Period object containing the date.
    * @throws {Error} If no period is found containing the given date.
    */
-  findPeriod(zeit?: ZeitSchema): Period {
+  findPeriod(zeit?: ZeitSchema): ZeitPeriod {
     if (!zeit) {
       zeit = this.getCurrentDateTime().toISO() as string;
     }
@@ -78,7 +78,7 @@ export class Cycles {
       period.endsAt.getZeit() >= userZeit.getZeit()
     );
     assertNotEquals(period, undefined, 'Period not found');
-    return period as Period;
+    return period as ZeitPeriod;
   }
 
   /**
@@ -87,14 +87,14 @@ export class Cycles {
    * @returns The nearest Period object before the date.
    * @throws {Error} If no period is found before the given date.
    */
-  findBefore(zeit?: ZeitSchema): Period {
+  findBefore(zeit?: ZeitSchema): ZeitPeriod {
     if (!zeit) {
       zeit = this.getCurrentDateTime().toISO() as string;
     }
     const userZeit = this.getUserZeit(zeit);
     const period = this.periods.reverse().find((period) => period.endsAt.getZeit() < userZeit.getZeit());
     assertNotEquals(period, undefined, 'Period not found');
-    return period as Period;
+    return period as ZeitPeriod;
   }
 
   /**
@@ -103,14 +103,14 @@ export class Cycles {
    * @returns The nearest Period object after the date.
    * @throws {Error} If no period is found after the given date.
    */
-  findAfter(zeit?: ZeitSchema): Period {
+  findAfter(zeit?: ZeitSchema): ZeitPeriod {
     if (!zeit) {
       zeit = this.getCurrentDateTime().toISO() as string;
     }
     const userZeit = this.getUserZeit(zeit);
     const period = this.periods.find((period) => period.startsAt.getZeit() > userZeit.getZeit());
     assertNotEquals(period, undefined, 'Period not found');
-    return period as Period;
+    return period as ZeitPeriod;
   }
 
   /**

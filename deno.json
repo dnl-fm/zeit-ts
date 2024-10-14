@@ -1,6 +1,6 @@
 {
   "name": "@dnl-fm/zeit-ts",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Helps syncing/reading user dates in your database",
   "exports": "./mod.ts",
   "imports": {

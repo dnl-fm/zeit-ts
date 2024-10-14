@@ -7,8 +7,8 @@ import { UserZeit } from './user-zeit.ts';
 
 const dateTimeStringSchema: z.ZodType<string> = z.string().datetime();
 export type ZeitSchema = z.infer<typeof dateTimeStringSchema>;
-export type Period = { startsAt: UserZeit; endsAt: UserZeit; durationInDays: number };
-export type Interval = 'MONTHLY' | 'YEARLY';
+export type ZeitPeriod = { startsAt: UserZeit; endsAt: UserZeit; durationInDays: number };
+export type ZeitInterval = 'MONTHLY' | 'YEARLY';
 
 /**
  * Represents a Zeit (time) object with timezone awareness.
