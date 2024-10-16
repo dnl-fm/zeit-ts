@@ -104,7 +104,7 @@ Deno.test("UserZeit - Cycles with yearly interval", () => {
   assertEquals(periods[2].endsAt.getZeit().toISO(), "2027-02-28T14:59:59.999+11:00");
 });
 
-Deno.test("UserZeit - CyclesFrom (valid start date)", () => {
+Deno.test("UserZeit - CyclesFrom (start date with same day in month)", () => {
   const userZone = Timezone.America.Chicago;
   const zeit = Zeit.forTimezone(userZone);
   const baseDate = zeit.fromUser("2024-03-15T09:00:00");
@@ -123,15 +123,23 @@ Deno.test("UserZeit - CyclesFrom (valid start date)", () => {
   assertEquals(periods[2].endsAt.getZeit().toISO(), "2024-08-15T08:59:59.999-05:00");
 });
 
-Deno.test("UserZeit - CyclesFrom (invalid start date)", () => {
-  const userZone = Timezone.America.Chicago;
+Deno.test("UserZeit - CyclesFrom (find nearest start date)", () => {
+  const userZone = Timezone.Europe.Berlin;
   const zeit = Zeit.forTimezone(userZone);
-  const baseDate = zeit.fromUser("2024-03-15T09:00:00");
-  const startDate = zeit.fromUser("2024-05-01T09:00:00");
+  const baseDate = zeit.fromUser("2023-12-24T09:00:00");
 
-  assertThrows(() => {
-    baseDate.cyclesFrom(startDate, 3, { interval: "MONTHLY" });
-  }, AssertionError, "Invalid start date");
+  const startDate = zeit.fromUser("2023-12-19T09:00:00");
+  const cycles = baseDate.cyclesFrom(startDate, 3, { interval: "MONTHLY" });
+  const periods = cycles.getPeriods();
+
+  assertEquals(periods[0].startsAt.getZeit().toISO(), "2023-12-24T09:00:00.000+01:00");
+  assertEquals(periods[0].endsAt.getZeit().toISO(), "2024-01-24T08:59:59.999+01:00");
+
+  assertEquals(periods[1].startsAt.getZeit().toISO(), "2024-01-24T09:00:00.000+01:00");
+  assertEquals(periods[1].endsAt.getZeit().toISO(), "2024-02-24T08:59:59.999+01:00");
+
+  assertEquals(periods[2].startsAt.getZeit().toISO(), "2024-02-24T09:00:00.000+01:00");
+  assertEquals(periods[2].endsAt.getZeit().toISO(), "2024-03-24T08:59:59.999+01:00");
 });
 
 const subStartsAtString = '2024-03-01';
@@ -164,6 +172,17 @@ Deno.test("UserZeit - currentCycle", () => {
   assertEquals(currentCycle.durationInDays, Math.round(endOfMonth.diff(startOfMonth, 'days').days), 'Days in current cycle');
 });
 
+Deno.test("UserZeit - currentCycle with now option", () => {
+  const subStartsAt = Zeit.forTimezone(userZone);
+  const userZeit = subStartsAt.fromUser(subStartsAtString);
+  const now = userZoneZeit.fromUser('2024-05-10T12:00:00.000Z');
+  const currentCycle = userZeit.currentCycle('MONTHLY', now);
+
+  assertEquals(currentCycle.startsAt.toISO(), '2024-05-01T00:00:00.000+02:00', 'start monthly');
+  assertEquals(currentCycle.endsAt.toISO(), '2024-05-31T23:59:59.999+02:00', 'end monthly');
+  assertEquals(currentCycle.durationInDays, 31, 'Days monthly');
+});
+
 Deno.test("UserZeit - nextCycle", () => {
   const subStartsAt = Zeit.forTimezone(userZone);
   const userZeit = subStartsAt.fromUser(subStartsAtString);
@@ -178,7 +197,7 @@ Deno.test("UserZeit - nextCycle", () => {
   assertEquals(nextCycle.durationInDays, Math.round(endOfNextMonth.diff(startOfNextMonth, 'days').days), 'Days in next cycle');
 });
 
-Deno.test('UserZeit - nextCycle with startsAt option', () => {
+Deno.test('UserZeit - nextCycle with now option', () => {
   const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
   const startDateMonthly = userZoneZeit.fromUser('2023-07-10T12:00:00.000Z');
 
@@ -194,7 +213,7 @@ Deno.test('UserZeit - nextCycle with startsAt option', () => {
   assertEquals(nextYearlyCycle.endsAt.toISODate(), '2025-05-15', 'end yearly');
 });
 
-Deno.test('UserZeit - previousCycle with startsAt option', () => {
+Deno.test('UserZeit - previousCycle with now option', () => {
   const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
   const startDateMonthly = userZoneZeit.fromUser('2023-07-10T12:00:00.000Z');
 
@@ -313,9 +332,9 @@ Deno.test("UserZeit - isSameOrBefore", () => {
 
 Deno.test("UserZeit.sortObjects - ascending order", () => {
   const objects = [
-    {name: "A", createdAt: userZoneZeit.fromUser("2023-05-01T10:00:00Z")},
-    {name: "B", createdAt: userZoneZeit.fromUser("2023-05-01T09:00:00Z")},
-    {name: "C", createdAt: userZoneZeit.fromUser("2023-05-01T11:00:00Z")},
+    {name: "A", createdAt: userZoneZeit.fromDatabase("2023-05-01T10:00:00Z").toUser()},
+    {name: "B", createdAt: userZoneZeit.fromDatabase("2023-05-01T09:00:00Z").toUser()},
+    {name: "C", createdAt: userZoneZeit.fromDatabase("2023-05-01T11:00:00Z").toUser()},
   ];
 
   const sortedAscending = UserZeit.sortObjects(objects, 'createdAt');
@@ -329,9 +348,9 @@ Deno.test("UserZeit.sortObjects - ascending order", () => {
 
 Deno.test("UserZeit.sortObjects - descending order", () => {
   const objects = [
-    {name: "A", createdAt: userZoneZeit.fromUser("2023-05-01T10:00:00Z")},
-    {name: "B", createdAt: userZoneZeit.fromUser("2023-05-01T09:00:00Z")},
-    {name: "C", createdAt: userZoneZeit.fromUser("2023-05-01T11:00:00Z")},
+    {name: "A", createdAt: userZoneZeit.fromDatabase("2023-05-01T10:00:00Z").toUser()},
+    {name: "B", createdAt: userZoneZeit.fromDatabase("2023-05-01T09:00:00Z").toUser()},
+    {name: "C", createdAt: userZoneZeit.fromDatabase("2023-05-01T11:00:00Z").toUser()},
   ];
 
   const sortedDescending = UserZeit.sortObjects(objects, 'createdAt', 'desc');
@@ -356,7 +375,7 @@ Deno.test("UserZeit.sortObjects - fail on invalid object", () => {
   );
 });
 
-Deno.test("UserZeit.daysLeft - days left until another UserZeit", () => {
+Deno.test("UserZeit.daysBetween - days between two UserZeit", () => {
   const dates = [
     {
       start: "2024-01-30T10:34:12",
@@ -402,5 +421,87 @@ Deno.test("UserZeit.daysLeft - days left until another UserZeit", () => {
       date.daysLeft,
       `${date.daysLeft} days left from ${date.start} to ${date.end}${date.description ? ` (${date.description})` : ''}`
     );
+  });
+});
+
+Deno.test("UserZeit - format method", () => {
+  const userZone = Timezone.Europe.Berlin;
+  const zeit = Zeit.forTimezone(userZone);
+  const userZeit = zeit.fromUser("2023-08-15T13:45:30.023");
+
+  const formatTests = [
+    { format: "S", expected: "23", description: "millisecond, no padding" },
+    { format: "SSS", expected: "023", description: "millisecond, padded to 3" },
+    { format: "u", expected: "023", description: "fractional seconds, functionally identical to SSS" },
+    { format: "uu", expected: "02", description: "fractional seconds, between 0 and 99, padded to 2" },
+    { format: "uuu", expected: "0", description: "fractional seconds, between 0 and 9" },
+    { format: "s", expected: "30", description: "second, no padding" },
+    { format: "ss", expected: "30", description: "second, padded to 2 padding" },
+    { format: "m", expected: "45", description: "minute, no padding" },
+    { format: "mm", expected: "45", description: "minute, padded to 2" },
+    { format: "h", expected: "1", description: "hour in 12-hour time, no padding" },
+    { format: "hh", expected: "01", description: "hour in 12-hour time, padded to 2" },
+    { format: "H", expected: "13", description: "hour in 24-hour time, no padding" },
+    { format: "HH", expected: "13", description: "hour in 24-hour time, padded to 2" },
+    { format: "Z", expected: "+2", description: "narrow offset" },
+    { format: "ZZ", expected: "+02:00", description: "short offset" },
+    { format: "ZZZ", expected: "+0200", description: "techie offset" },
+    { format: "ZZZZ", expected: "GMT+2", description: "abbreviated named offset" },
+    { format: "ZZZZZ", expected: "Central European Summer Time", description: "unabbreviated named offset" },
+    { format: "z", expected: "Europe/Berlin", description: "IANA zone" },
+    { format: "a", expected: "PM", description: "meridiem" },
+    { format: "d", expected: "15", description: "day of the month, no padding" },
+    { format: "dd", expected: "15", description: "day of the month, padded to 2" },
+    { format: "c", expected: "2", description: "day of the week, as number from 1-7 (Monday is 1, Sunday is 7)" },
+    { format: "ccc", expected: "Tue", description: "day of the week, as an abbreviate localized string" },
+    { format: "cccc", expected: "Tuesday", description: "day of the week, as an unabbreviated localized string" },
+    { format: "ccccc", expected: "T", description: "day of the week, as a single localized letter" },
+    { format: "L", expected: "8", description: "month as an unpadded number" },
+    { format: "LL", expected: "08", description: "month as a padded number" },
+    { format: "LLL", expected: "Aug", description: "month as an abbreviated localized string" },
+    { format: "LLLL", expected: "August", description: "month as an unabbreviated localized string" },
+    { format: "LLLLL", expected: "A", description: "month as a single localized letter" },
+    { format: "y", expected: "2023", description: "year, unpadded" },
+    { format: "yy", expected: "23", description: "two-digit year" },
+    { format: "yyyy", expected: "2023", description: "four- to six- digit year, pads to 4" },
+    { format: "G", expected: "AD", description: "abbreviated localized era" },
+    { format: "GG", expected: "Anno Domini", description: "unabbreviated localized era" },
+    { format: "GGGGG", expected: "A", description: "one-letter localized era" },
+    { format: "kk", expected: "23", description: "ISO week year, unpadded" },
+    { format: "kkkk", expected: "2023", description: "ISO week year, padded to 4" },
+    { format: "W", expected: "33", description: "ISO week number, unpadded" },
+    { format: "WW", expected: "33", description: "ISO week number, padded to 2" },
+    { format: "o", expected: "227", description: "ordinal (day of year), unpadded" },
+    { format: "ooo", expected: "227", description: "ordinal (day of year), padded to 3" },
+    { format: "q", expected: "3", description: "quarter, no padding" },
+    { format: "qq", expected: "03", description: "quarter, padded to 2" },
+    { format: "D", expected: "8/15/2023", description: "localized numeric date" },
+    { format: "DD", expected: "Aug 15, 2023", description: "localized date with abbreviated month" },
+    { format: "DDD", expected: "August 15, 2023", description: "localized date with full month" },
+    { format: "DDDD", expected: "Tuesday, August 15, 2023", description: "localized date with full month and weekday" },
+    { format: "t", expected: "1:45 PM", description: "localized time" },
+    { format: "tt", expected: "1:45:30 PM", description: "localized time with seconds" },
+    { format: "ttt", expected: "1:45:30 PM GMT+2", description: "localized time with seconds and abbreviated offset" },
+    { format: "tttt", expected: "1:45:30 PM Central European Summer Time", description: "localized time with seconds and full offset" },
+    { format: "T", expected: "13:45", description: "localized 24-hour time" },
+    { format: "TT", expected: "13:45:30", description: "localized 24-hour time with seconds" },
+    { format: "TTT", expected: "13:45:30 GMT+2", description: "localized 24-hour time with seconds and abbreviated offset" },
+    { format: "TTTT", expected: "13:45:30 Central European Summer Time", description: "localized 24-hour time with seconds and full offset" },
+    { format: "f", expected: "8/15/2023, 1:45 PM", description: "short localized date and time" },
+    { format: "ff", expected: "Aug 15, 2023, 1:45 PM", description: "less short localized date and time" },
+    { format: "fff", expected: "August 15, 2023 at 1:45 PM GMT+2", description: "verbose localized date and time" },
+    { format: "ffff", expected: "Tuesday, August 15, 2023 at 1:45 PM Central European Summer Time", description: "extra verbose localized date and time" },
+    { format: "F", expected: "8/15/2023, 1:45:30 PM", description: "short localized date and time with seconds" },
+    { format: "FF", expected: "Aug 15, 2023, 1:45:30 PM", description: "less short localized date and time with seconds" },
+    { format: "FFF", expected: "August 15, 2023 at 1:45:30 PM GMT+2", description: "verbose localized date and time with seconds" },
+    { format: "FFFF", expected: "Tuesday, August 15, 2023 at 1:45:30 PM Central European Summer Time", description: "extra verbose localized date and time with seconds" },
+    { format: "X", expected: "1692099930", description: "unix timestamp in seconds" },
+    { format: "x", expected: "1692099930023", description: "unix timestamp in milliseconds" },
+  ];
+
+  formatTests.forEach(({ format, expected, description }) => {
+    const result = userZeit.format(format).replace(/\s+/g, '');
+    expected = expected.replace(/\s+/g, '');
+    assertEquals(result, expected, `'${format}' (${description}) --> expected: '${expected}' (chars: ${expected.length}); received: '${result}' (chars: ${result.length})`);
   });
 });

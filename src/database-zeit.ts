@@ -1,4 +1,4 @@
-import { assertEquals } from 'assert/equals';
+import { assert } from 'assert/assert';
 import type { DateObjectUnits } from 'npm:@types/luxon@3';
 import { DateTime } from './luxon-proxy.ts';
 import { Timezone } from './timezone.ts';
@@ -64,7 +64,7 @@ export class DatabaseZeit {
    */
   toUser(): UserZeit {
     const userZeit = this.dateTime.setZone(this.userTimezone);
-    assertEquals(userZeit.isValid, true, 'Invalid date');
+    assert(userZeit.isValid, `Invalid date: ${userZeit.toISO()}`);
 
     return new UserZeit(userZeit);
   }

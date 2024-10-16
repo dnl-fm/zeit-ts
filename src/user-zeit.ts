@@ -1,6 +1,7 @@
+import { assert } from 'assert/assert';
 import { assertEquals } from 'assert/equals';
 import { assertInstanceOf } from 'assert/instance-of';
-import type { DateObjectUnits, DurationLike } from 'npm:@types/luxon@3';
+import type { DateObjectUnits, DateTimeUnit, DurationLike } from 'npm:@types/luxon@3';
 import { Cycles } from './cycles.ts';
 import { DatabaseZeit } from './database-zeit.ts';
 import { DateTime } from './luxon-proxy.ts';
@@ -11,10 +12,6 @@ import type { ZeitInterval, ZeitPeriod } from './zeit.ts';
  * Represents a Zeit (time) object in the user's timezone.
  */
 export class UserZeit {
-  static clone(zeit: UserZeit): UserZeit {
-    return new UserZeit(zeit.getZeit());
-  }
-
   /**
    * Creates a UserZeit instance representing the current time in the specified timezone.
    * @param timezone - The timezone to use.
@@ -71,11 +68,38 @@ export class UserZeit {
   }
 
   /**
+   * Clones the UserZeit instance.
+   * @returns A new UserZeit instance with the same date and timezone.
+   */
+  clone() {
+    return new UserZeit(this.dateTime, this.now);
+  }
+
+  /**
    * Checks if the DateTime is valid.
    * @returns True if the DateTime is valid, false otherwise.
    */
   isValid() {
     return this.dateTime.isValid;
+  }
+
+  /**
+   * Formats the date/time using the specified format.
+   * @param format - The format string to use for formatting.
+   * @returns The formatted date/time string.
+   */
+  format(format: string) {
+    return this.dateTime.toFormat(format);
+  }
+
+  startOf(unit: DateTimeUnit) {
+    this.dateTime = this.dateTime.startOf(unit);
+    return this;
+  }
+
+  endOf(unit: DateTimeUnit) {
+    this.dateTime = this.dateTime.endOf(unit);
+    return this;
   }
 
   /**
@@ -86,6 +110,14 @@ export class UserZeit {
   set(values: DateObjectUnits): UserZeit {
     this.dateTime = this.getZeit().set(values);
     return this;
+  }
+
+  /**
+   * Sets the time to midnight.
+   * @returns This UserZeit instance for method chaining.
+   */
+  setToMidnight(): UserZeit {
+    return this.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
   }
 
   /**
@@ -106,14 +138,6 @@ export class UserZeit {
   plus(duration: DurationLike): UserZeit {
     this.dateTime = this.getZeit().plus(duration);
     return this;
-  }
-
-  /**
-   * Sets the time to midnight.
-   * @returns This UserZeit instance for method chaining.
-   */
-  setToMidnight(): UserZeit {
-    return this.set({ hour: 0, minute: 0, second: 0, millisecond: 0 });
   }
 
   /**
@@ -162,13 +186,22 @@ export class UserZeit {
   }
 
   /**
+   * Checks if this UserZeit is before or the same as another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is before or the same as the provided UserZeit, false otherwise.
+   */
+  isSameDateOrBefore(zeit: UserZeit): boolean {
+    return this.isSameDate(zeit) || this.isBefore(zeit);
+  }
+
+  /**
    * Calculates the number of days between this UserZeit and another UserZeit.
    * @param otherZeit - The UserZeit to calculate the difference to.
    * @returns The number of days between the two UserZeit objects.
    */
   daysBetween(otherZeit: UserZeit): number {
-    const thisDate = this.setToMidnight().getZeit();
-    const otherDate = otherZeit.setToMidnight().getZeit();
+    const thisDate = this.clone().setToMidnight().getZeit();
+    const otherDate = otherZeit.clone().setToMidnight().getZeit();
 
     // ensure same timezone
     const thisInUTC = thisDate.toUTC();
@@ -201,7 +234,7 @@ export class UserZeit {
    */
   toDatabase(): DatabaseZeit {
     const databaseZeit = this.dateTime.setZone(Timezone.UTC);
-    assertEquals(databaseZeit.isValid, true, 'Invalid date');
+    assert(databaseZeit.isValid, `Invalid date: ${databaseZeit.toISO()}`);
 
     return new DatabaseZeit(databaseZeit, this.getTimezone());
   }
@@ -248,10 +281,7 @@ export class UserZeit {
    * @returns A new Cycles instance.
    */
   cyclesFrom(startZeit: UserZeit, numberOfCycles: number, options: { interval: ZeitInterval } = { interval: 'MONTHLY' }): Cycles {
-    const validCycles = this.cyclesUntil(startZeit, { interval: options.interval });
-    const isValid = validCycles.getPeriods().some((period) => period.startsAt.isSameDate(startZeit));
-    assertEquals(isValid, true, 'Invalid start date');
-    return this.cycles(numberOfCycles, { ...options, startZeit });
+    return this.cycles(numberOfCycles, { ...options, startZeit: this.getNearestCycleStart(startZeit, options.interval) });
   }
 
   /**
@@ -283,12 +313,12 @@ export class UserZeit {
   /**
    * Gets the previous cycle based on the current date.
    * @param interval - The interval for cycle calculation.
-   * @param startsAt - Optional start date for the cycle. If not provided, uses the current UserZeit.
+   * @param now - Optional start date for the cycle. If not provided, uses the current UserZeit.
    * @returns A Period object representing the previous cycle.
    */
-  previousCycle(interval: ZeitInterval = 'MONTHLY', startsAt?: UserZeit): ZeitPeriod {
+  previousCycle(interval: ZeitInterval = 'MONTHLY', now?: UserZeit): ZeitPeriod {
     let fromZeit = this.getNow();
-    if (startsAt) fromZeit = UserZeit.clone(startsAt);
+    if (now) fromZeit = now.clone();
     const previousIntervalZeit = interval === 'MONTHLY' ? fromZeit.minus({ months: 1 }) : fromZeit.minus({ years: 1 });
     return this.cyclesUntil(previousIntervalZeit, { interval }).getLastPeriod();
   }
@@ -296,36 +326,53 @@ export class UserZeit {
   /**
    * Gets the current cycle based on the current date.
    * @param interval - The interval for cycle calculation.
+   * @param now - Optional start date for the cycle. If not provided, uses the current UserZeit.
    * @returns A Period object representing the current cycle.
    */
-  currentCycle(interval: ZeitInterval = 'MONTHLY'): ZeitPeriod {
-    return this.cyclesUntil(this.getNow(), { interval }).getLastPeriod();
+  currentCycle(interval: ZeitInterval = 'MONTHLY', now?: UserZeit): ZeitPeriod {
+    let fromZeit = this.getNow();
+    if (now) fromZeit = now.clone();
+    return this.cyclesUntil(fromZeit, { interval }).getLastPeriod();
   }
 
   /**
    * Gets the next cycle based on the current date.
    * @param interval - The interval for cycle calculation.
-   * @param startsAt - Optional start date for the cycle. If not provided, uses the current UserZeit.
+   * @param now - Optional start date for the cycle. If not provided, uses the current UserZeit.
    * @returns A Period object representing the next cycle.
    */
-  nextCycle(interval: ZeitInterval = 'MONTHLY', startsAt?: UserZeit): ZeitPeriod {
+  nextCycle(interval: ZeitInterval = 'MONTHLY', now?: UserZeit): ZeitPeriod {
     let fromZeit = this.getNow();
-    if (startsAt) fromZeit = UserZeit.clone(startsAt);
+    if (now) fromZeit = now.clone();
     const nextIntervalZeit = interval === 'MONTHLY' ? fromZeit.plus({ months: 1 }) : fromZeit.plus({ years: 1 });
     return this.cyclesUntil(nextIntervalZeit, { interval }).getLastPeriod();
+  }
+
+  /**
+   * Gets the nearest cycle start date.
+   * @param startZeit - The start date for cycle generation.
+   * @param interval - The interval for cycle calculation.
+   * @returns A new UserZeit object representing the nearest cycle start date.
+   * @private
+   */
+  private getNearestCycleStart(startZeit: UserZeit, interval: ZeitInterval): UserZeit {
+    const currentCycle = this.currentCycle(interval, startZeit);
+    if (!currentCycle.startsAt.isSameDate(startZeit) && currentCycle.startsAt.isBefore(startZeit)) {
+      return this.nextCycle(interval, startZeit).startsAt;
+    }
+    return currentCycle.startsAt;
   }
 
   /**
    * Generates a cycle start date.
    * @param interval - The interval for cycle generation (MONTHLY or YEARLY).
    * @param iteration - The number of intervals to add to the start date.
-   * @param startsAt - Optional start date for the cycle. If not provided, uses the current UserZeit.
+   * @param now - Optional start date for the cycle. If not provided, uses the current UserZeit.
    * @returns A new UserZeit object representing the cycle start date.
    * @private
    */
-  private cycleStartsAt(interval: ZeitInterval, iteration: number, startsAt?: UserZeit): UserZeit {
-    const newZeit = this.buildCycle(interval, iteration, startsAt);
-    return new UserZeit(newZeit);
+  private cycleStartsAt(interval: ZeitInterval, iteration: number, now?: UserZeit): UserZeit {
+    return this.buildCycle(interval, iteration, now);
   }
 
   /**
@@ -338,7 +385,7 @@ export class UserZeit {
    */
   private cycleEndsAt(interval: ZeitInterval, iteration: number, startsAt?: UserZeit): UserZeit {
     const newZeit = this.buildCycle(interval, iteration + 1, startsAt);
-    return new UserZeit(newZeit.minus({ milliseconds: 1 }));
+    return newZeit.minus({ milliseconds: 1 });
   }
 
   /**
@@ -357,15 +404,15 @@ export class UserZeit {
    * Builds a cycle DateTime object.
    * @param interval - The interval for cycle generation (MONTHLY or YEARLY).
    * @param iteration - The number of intervals to add to the start date.
-   * @param startsAt - Optional start date for the cycle. If not provided, uses the current UserZeit.
+   * @param now - Optional start date for the cycle. If not provided, uses the current UserZeit.
    * @returns A new DateTime object representing the cycle.
    * @throws {Error} If the resulting date is invalid.
    * @private
    */
-  private buildCycle(interval: ZeitInterval, iteration: number, startsAt?: UserZeit): DateTime {
-    const zeit = startsAt ? startsAt.getZeit() : this.getZeit();
-    const newZeit = interval === 'MONTHLY' ? zeit.plus({ months: iteration }) : zeit.plus({ years: iteration });
-    assertEquals(newZeit.isValid, true, 'Invalid date');
+  private buildCycle(interval: ZeitInterval, iteration: number, now?: UserZeit): UserZeit {
+    const userZeit = (now ?? this).clone();
+    const newZeit = interval === 'MONTHLY' ? userZeit.plus({ months: iteration }) : userZeit.plus({ years: iteration });
+    assert(newZeit.isValid(), 'Invalid date');
     return newZeit;
   }
 
