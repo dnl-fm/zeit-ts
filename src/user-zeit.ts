@@ -103,6 +103,15 @@ export class UserZeit {
   }
 
   /**
+   * Gets the value of the specified unit from the DateTime object.
+   * @param unit - The unit to get from the DateTime object (e.g., 'year', 'month', 'day', 'hour', etc.).
+   * @returns The numeric value of the specified unit.
+   */
+  get(unit: keyof DateTime): number {
+    return this.getZeit().get(unit);
+  }
+
+  /**
    * Sets specified components of the date/time.
    * @param values - An object containing the components to set and their values.
    * @returns This UserZeit instance for method chaining.
@@ -207,8 +216,10 @@ export class UserZeit {
     const thisInUTC = thisDate.toUTC();
     const otherInUTC = otherDate.toUTC();
 
+    const days = Math.round(thisInUTC.diff(otherInUTC, 'days').days);
+
     // ensure positive difference
-    return Math.abs(thisInUTC.diff(otherInUTC, 'days').days);
+    return Math.abs(days);
   }
 
   /**

@@ -1,5 +1,5 @@
 import { assert } from 'assert/assert';
-import type { DateObjectUnits } from 'npm:@types/luxon@3';
+import type { DateObjectUnits, DurationLike } from 'npm:@types/luxon@3';
 import { DateTime } from './luxon-proxy.ts';
 import { Timezone } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
@@ -14,6 +14,15 @@ export class DatabaseZeit {
    * @param userTimezone The user's timezone, used when converting back to UserZeit.
    */
   constructor(private dateTime: DateTime, private userTimezone: Timezone) {}
+
+  /**
+   * Gets the value of the specified unit from the DateTime object.
+   * @param unit - The unit to get from the DateTime object (e.g., 'year', 'month', 'day', 'hour', etc.).
+   * @returns The numeric value of the specified unit.
+   */
+  get(unit: keyof DateTime): number {
+    return this.getZeit().get(unit);
+  }
 
   /**
    * Sets specified components of the date/time.
@@ -55,6 +64,26 @@ export class DatabaseZeit {
    */
   toISODate(): string {
     return this.dateTime.toISODate()!;
+  }
+
+  /**
+   * Subtracts a duration from the current time.
+   * @param duration - The duration to subtract.
+   * @returns This DatabaseZeit instance for method chaining.
+   */
+  minus(duration: DurationLike): DatabaseZeit {
+    this.dateTime = this.getZeit().minus(duration);
+    return this;
+  }
+
+  /**
+   * Adds a duration to the current time.
+   * @param duration - The duration to add.
+   * @returns This DatabaseZeit instance for method chaining.
+   */
+  plus(duration: DurationLike): DatabaseZeit {
+    this.dateTime = this.getZeit().plus(duration);
+    return this;
   }
 
   /**
