@@ -16,6 +16,17 @@ export type ZeitInterval = 'MONTHLY' | 'YEARLY';
  */
 export class Zeit {
   /**
+   * Removes the timezone information from a Zeit string.
+   * @param zeit The Zeit string to remove the timezone information from.
+   * @returns The Zeit string without the timezone information.
+   */
+  static removeTimezoneInformation(zeit: ZeitSchema): ZeitSchema {
+    // 2023-05-29T10:00:00.000Z --> 2023-05-29T10:00:00.000
+    // 2023-05-29T10:00:00.000+02:00 --> 2023-05-29T10:00:00.000
+    return zeit.replace(/([+-]\d{2}:*\d{2}|Z)$/, '');
+  }
+
+  /**
    * Creates a new Zeit instance with the specified user timezone.
    * @param zone The user's timezone.
    * @returns A new Zeit instance.
@@ -31,14 +42,30 @@ export class Zeit {
   constructor(private timezone: z.infer<typeof TimezoneSchema>) {}
 
   /**
+   * Creates a UserZeit instance representing the current time in the specified timezone.
+   * @param timezone - The timezone to use.
+   * @param now - Optional DateTime object representing the current time.
+   * @returns A new UserZeit instance.
+   */
+  fromNow(now?: DateTime): UserZeit {
+    return UserZeit.fromNow(this.timezone, now);
+  }
+
+  /**
    * Creates a UserZeit instance from a user time string.
    * @param zeit The user's time as a string in ISO 8601 format.
    * @returns A new UserZeit instance.
    */
   fromUser(zeit: ZeitSchema | Date): UserZeit {
-    if (zeit instanceof Date) {
-      zeit = this.fromDate(zeit).toISO()!;
-    }
+    /**
+     * Timezone will be set by the assigned timezone (Zeit.fromTimezone())
+     * - therefore we need to remove the timezone information if present
+     * - if the timezone information is present, we will build the wrong time
+     */
+    if (typeof zeit === 'string') zeit = Zeit.removeTimezoneInformation(zeit);
+
+    if (zeit instanceof Date) zeit = this.fromDate(zeit).toISO()!;
+
     return new UserZeit(this.getLuxonDateTime(zeit, this.timezone));
   }
 

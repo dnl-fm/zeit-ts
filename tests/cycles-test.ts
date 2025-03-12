@@ -174,3 +174,11 @@ Deno.test("Cycles - findAfter with current date", () => {
   const now = DateTime.now().setZone(userZone);
   assert(period.startsAt.getZeit() > now);
 });
+
+Deno.test("Cycles - cyclesUntil e.g. subscription end", () => {
+  const subFirstBillingAt = zeit.fromDatabase("2023-07-20T22:00:00.000Z").toUser();
+  const endDate = zeit.fromDatabase("2023-08-20T23:55:00.000Z").toUser().setToMidnight().minus({millisecond:1});
+  const cycles = subFirstBillingAt.cyclesUntil(endDate);
+  console.log({endDate});
+  console.log(cycles.getPeriods());
+});
