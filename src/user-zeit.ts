@@ -159,6 +159,15 @@ export class UserZeit {
   }
 
   /**
+   * Checks if this UserZeit has a different date than another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if the dates are different, false otherwise.
+   */
+  isDifferentDate(zeit: UserZeit): boolean {
+    return this.isSameDate(zeit) === false;
+  }
+
+  /**
    * Checks if this UserZeit is after another UserZeit.
    * @param zeit - The UserZeit to compare with.
    * @returns True if this UserZeit is after the provided UserZeit, false otherwise.
@@ -174,6 +183,15 @@ export class UserZeit {
    */
   isSameOrAfter(zeit: UserZeit): boolean {
     return this.dateTime >= zeit.getZeit();
+  }
+
+  /**
+   * Checks if this UserZeit is after or the same as another UserZeit.
+   * @param zeit - The UserZeit to compare with.
+   * @returns True if this UserZeit is after or the same as the provided UserZeit, false otherwise.
+   */
+  isSameDateOrAfter(zeit: UserZeit): boolean {
+    return this.isSameDate(zeit) || this.isAfter(zeit);
   }
 
   /**
@@ -308,13 +326,13 @@ export class UserZeit {
     while (true) {
       const startsAt = this.cycleStartsAt(options.interval, i);
       const endsAt = this.cycleEndsAt(options.interval, i);
-
       const period = this.buildPeriod(startsAt, endsAt);
       periods.push(period);
 
-      if (period.endsAt.isSameOrAfter(endZeit)) {
+      if (period.endsAt.isSameOrAfter(endZeit.clone().setToMidnight())) {
         break;
       }
+
       i++;
     }
 
