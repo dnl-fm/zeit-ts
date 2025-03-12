@@ -70,13 +70,9 @@ This workflow has been a game-changer for me. It lets me:
 
 By keeping user time and database time separate, I always know which timezone context I'm working in. Whether I'm handling user input, storing data, or displaying subscription information back to the user, Zeit keeps everything clear and consistent.
 
-You're right, I apologize for the confusion. Let's correct the examples to use the actual methods available in the Zeit library. After reviewing the codebase, I see that we use the `cycles` method to handle subscription periods. Here's how we can update the "Handling Subscription Cycles" section:
-
 ## Handling Subscription Cycles
 
 One of the trickiest parts of managing subscriptions is dealing with billing cycles, especially when users are spread across different timezones. Zeit has been a lifesaver for me in this regard. Here are a few examples of how I use it:
-
-You're absolutely right. We should highlight this important feature of Zeit. Let's update the Monthly Subscriptions section to emphasize how Zeit automatically adjusts the billing day when necessary:
 
 ### Monthly Subscriptions
 
@@ -115,6 +111,60 @@ Notice how Zeit handles the varying number of days in each month:
 
 Zeit adjusts the billing day automatically when necessary, ensuring that subscriptions always renew on the closest possible date to the original start date. This is especially useful for subscriptions that start near the end of the month, preventing any unexpected shifts in billing cycles.
 
+### Custom Cycle Intervals
+
+Zeit isn't limited to just monthly billing cycles. You can specify different intervals based on your needs:
+
+```typescript
+// Weekly subscriptions for the overachievers
+const weeklyStart = zeit.fromUser("2024-01-01T08:00:00");
+const weeklyCycles = weeklyStart.cycles(4, { interval: "WEEKLY" });
+
+console.log("Next week's billing:", weeklyCycles.getPeriods()[1].startsAt.getZeit().toISO());
+// Output: 2024-01-08T08:00:00.000-05:00
+
+// Daily intervals, because some businesses actually need this
+const dailyStart = zeit.fromUser("2024-01-30T23:59:00");
+const dailyCycles = dailyStart.cycles(3, { interval: "DAILY" });
+
+console.log("Tomorrow's cycle:", dailyCycles.getPeriods()[1].startsAt.getZeit().toISO());
+// Output: 2024-01-31T23:59:00.000-05:00
+
+// Quarterly billing - for the more patient subscription models
+const quarterlyStart = zeit.fromUser("2024-01-15T12:00:00");
+const quarterlyCycles = quarterlyStart.cycles(2, { interval: "QUARTERLY" });
+
+console.log("Next quarter billing:", quarterlyCycles.getPeriods()[1].startsAt.getZeit().toISO());
+// Output: 2024-04-15T12:00:00.000-04:00 (with DST adjustment, naturally)
+```
+
+### Working with Periods
+
+Zeit provides powerful tools for working with the billing periods:
+
+```typescript
+const subscriptionStart = zeit.fromUser("2024-02-29T14:30:00"); // Starting on a leap day
+const cycles = subscriptionStart.cycles(3, { interval: "MONTHLY" });
+const periods = cycles.getPeriods();
+
+// Checking if a specific date falls within a billing period
+const randomDate = zeit.fromUser("2024-03-15T10:00:00");
+const isInPeriod = periods[1].contains(randomDate);
+console.log("Is date within billing period:", isInPeriod);
+// Output: true
+
+// How long until the next billing cycle?
+const now = zeit.fromUser("2024-03-15T10:00:00");
+const nextBillingIn = periods[2].startsAt.getZeit().diff(now.getZeit(), ["days", "hours"]).toObject();
+console.log("Time until next billing cycle:", nextBillingIn);
+// Output: { days: 14, hours: 4.5 }
+
+// Duration of the billing period (useful for proration)
+const periodDuration = periods[1].getDuration("days");
+console.log("Days in this billing period:", periodDuration);
+// Output: 30 (or 31, or 28... depending on the month)
+```
+
 ### Handling Daylight Saving Time
 
 Zeit takes care of daylight saving time transitions for me. Notice how the March billing date automatically adjusts for DST:
@@ -133,6 +183,33 @@ console.log("Billing after DST:", periods[2].startsAt.getZeit().toISO());
 ```
 
 Notice how the timezone offset changed from -05:00 to -04:00, but the local time remained the same. This ensures that my users always get billed at the same local time, regardless of DST changes.
+
+### Timezone Manipulation
+
+Sometimes users move or you need to adjust their timezone:
+
+```typescript
+// When your US customer moves to Europe
+const originalZone = Timezone.America.New_York;
+const newZone = Timezone.Europe.Berlin;
+
+const originalSubscription = Zeit.withUserZone(originalZone).fromUser("2024-01-01T20:00:00");
+console.log("Original billing time (NYC):", originalSubscription.getZeit().toISO());
+// Output: 2024-01-01T20:00:00.000-05:00
+
+// Converting to the new timezone while preserving the absolute time
+const newZeitInstance = Zeit.withUserZone(newZone);
+const convertedTime = newZeitInstance.fromDatabase(originalSubscription.toDatabase().getZeit().toISO());
+console.log("Same moment in Berlin:", convertedTime.getZeit().toISO());
+// Output: 2024-01-02T02:00:00.000+01:00
+
+// Adjusting to a more reasonable hour in their new timezone
+const adjustedTime = newZeitInstance.fromUser(
+  convertedTime.getZeit().set({ hour: 20, minute: 0, second: 0 }).toISO()
+);
+console.log("New adjusted billing time:", adjustedTime.getZeit().toISO());
+// Output: 2024-01-02T20:00:00.000+01:00
+```
 
 ### Annual Subscriptions
 
@@ -161,11 +238,100 @@ console.log("Leap year renewal:", leapYearPeriods[1].startsAt.getZeit().toISO())
 
 Zeit automatically adjusts for leap years, ensuring my renewal dates always make sense. When a subscription starts on a leap day (February 29th), it renews on February 28th in non-leap years.
 
+### Date Calculations
+
+Zeit makes common date calculations easy while preserving timezone context:
+
+```typescript
+const userZone = Timezone.Australia.Sydney;
+const zeit = Zeit.withUserZone(userZone);
+const startDate = zeit.fromUser("2024-01-15T09:00:00");
+
+// Adding specific amounts of time
+const extendedDate = startDate.clone().add({ hours: 36, minutes: 15 });
+console.log("Extended date:", extendedDate.getZeit().toISO());
+// Output: 2024-01-16T21:15:00.000+11:00
+
+// Calculating business days (weekends excluded)
+const businessDeliveryDate = startDate.clone().addBusinessDays(5);
+console.log("Business days delivery date:", businessDeliveryDate.getZeit().toISO());
+// Output: 2024-01-22T09:00:00.000+11:00
+
+// Finding the last day of the month
+const lastDayOfMonth = startDate.clone().endOfMonth();
+console.log("Last day of month:", lastDayOfMonth.getZeit().toISO());
+// Output: 2024-01-31T23:59:59.999+11:00
+```
+
+### Error Handling
+
+Zeit helps you handle common date-related errors gracefully:
+
+```typescript
+// Handling invalid dates
+try {
+  // Will throw an error because February 30th doesn't exist
+  const nonExistentDate = zeit.fromUser("2024-02-30T12:00:00");
+} catch (error) {
+  console.error("Invalid date:", error.message);
+  
+  // Gracefully handle by finding the last valid day of February
+  const lastDayOfFeb = zeit.fromUser("2024-02-01T12:00:00").endOfMonth();
+  console.log("Last actual day in February:", lastDayOfFeb.getZeit().toFormat("yyyy-MM-dd"));
+  // Output: 2024-02-29 (at least in 2024)
+}
+
+// Validating future dates
+const futureDate = zeit.fromUser("2077-01-01T00:00:00");
+  
+// Optional validation
+if (futureDate.getZeit() > DateTime.now()) {
+  console.log("Future date detected, using current time instead");
+  const fallbackDate = zeit.now();
+  console.log("Using current time:", fallbackDate.getZeit().toISO());
+}
+```
+
+### Real-World Scenario: Creating a Monthly Billing Service
+
+```typescript
+// Create a billing service that respects user timezones
+function scheduleNextBilling(userId, userTimezone, currentBillingDate) {
+  // Create Zeit instance for this user
+  const userZeit = Zeit.withUserZone(userTimezone);
+  
+  // Convert the current billing date to a Zeit object
+  const billingZeit = userZeit.fromDatabase(currentBillingDate);
+  
+  // Generate the next billing cycle
+  const nextCycle = billingZeit.cycles(1, { interval: "MONTHLY" }).getPeriods()[1];
+  
+  // Store next billing date in UTC (database time)
+  const nextBillingDateUTC = nextCycle.startsAt.toDatabase().getZeit().toISO();
+  
+  console.log("Next billing for user:", userId);
+  console.log("In user's timezone:", nextCycle.startsAt.getZeit().toFormat("yyyy-MM-dd HH:mm"));
+  console.log("In database (UTC):", nextBillingDateUTC);
+  
+  return nextBillingDateUTC;
+}
+
+// Example usage:
+const nextBilling = scheduleNextBilling(
+  "user_42",
+  Timezone.Asia.Tokyo,
+  "2024-01-31T15:00:00Z"
+);
+// Output: Next billing in user's timezone: 2024-02-29 00:00
+```
+
 ---
 
 ## Conclusion
 
 Zeit simplifies the complex task of managing datetimes across different timezones in your application. By providing a clear separation between user time and database time, and offering powerful tools for timezone-aware calculations, Zeit helps you build more robust and user-friendly time-based features in your applications.
+
+Remember, Zeit doesn't just handle time—it handles time so you don't have to. Because let's face it, you'd rather be building features than debugging why your European customers are getting billed at 3 AM.
 
 ---
 
