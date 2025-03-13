@@ -1,6 +1,11 @@
-# Zeit: Simplifying Timezone-Aware DateTime Handling
+# Zeit ⏰ 
 
-Zeit is a TypeScript library designed to simplify datetime handling in applications that deal with users across different timezones. It's particularly useful for subscription services, billing systems, and any application where precise timing based on user timezones is crucial.
+Because somewhere in the world, it's already tomorrow, and your code needs to deal with it.
+
+Zeit is a TypeScript library that makes datetime handling less painful, especially when your users are scattered across timezones like stars in the sky. Perfect for:
+- Subscription services (because money doesn't care what time it is)
+- Billing systems (your 3 PM invoice shouldn't arrive at 3 AM)
+- Any app where timing is everything (and timezones are trying to ruin everything)
 
 ---
 
