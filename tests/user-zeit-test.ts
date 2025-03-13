@@ -505,3 +505,65 @@ Deno.test("UserZeit - format method", () => {
     assertEquals(result, expected, `'${format}' (${description}) --> expected: '${expected}' (chars: ${expected.length}); received: '${result}' (chars: ${result.length})`);
   });
 });
+
+Deno.test("UserZeit - invalid timezone handling", () => {
+  const invalidZone = "Invalid/Timezone";
+  assertThrows(
+    () => Zeit.forTimezone(invalidZone),
+    Error,
+    "Invalid timezone",
+    "Should throw error for invalid timezone"
+  );
+
+  // Test timezone validation through Zeit factory
+  assertThrows(
+    () => Zeit.forTimezone("Invalid/Zone").fromUser("2024-03-15T10:00:00"),
+    Error,
+    "Invalid timezone",
+    "Should throw error when creating Zeit with invalid timezone"
+  );
+});
+
+Deno.test("UserZeit - date manipulation error cases", () => {
+  const userZeit = userZoneZeit.fromUser("2024-03-15T10:00:00");
+
+  // Test invalid day
+  assertThrows(
+    () => userZeit.set({ day: 32 }),
+    Error,
+    "Invalid date",
+    "Should throw error for invalid day"
+  );
+
+  // Test invalid month
+  assertThrows(
+    () => userZeit.set({ month: 13 }),
+    Error,
+    "Invalid date",
+    "Should throw error for invalid month"
+  );
+
+  // Test invalid hour
+  assertThrows(
+    () => userZeit.set({ hour: 25 }),
+    Error,
+    "Invalid date",
+    "Should throw error for invalid hour"
+  );
+
+  // Test invalid minute
+  assertThrows(
+    () => userZeit.set({ minute: 60 }),
+    Error,
+    "Invalid date",
+    "Should throw error for invalid minute"
+  );
+
+  // Test invalid second
+  assertThrows(
+    () => userZeit.set({ second: 60 }),
+    Error,
+    "Invalid date",
+    "Should throw error for invalid second"
+  );
+});

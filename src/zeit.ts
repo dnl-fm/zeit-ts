@@ -2,7 +2,7 @@ import { assertEquals } from 'assert/equals';
 import { z } from 'zod';
 import { DatabaseZeit } from './database-zeit.ts';
 import { DateTime } from './luxon-proxy.ts';
-import { Timezone, type TimezoneSchema } from './timezone.ts';
+import { Timezone, TimezoneSchema } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
 
 const dateTimeStringSchema: z.ZodType<string> = z.string().datetime();
@@ -79,6 +79,10 @@ export class Zeit {
    * @returns A new Zeit instance.
    */
   static forTimezone(zone: z.infer<typeof TimezoneSchema>): Zeit {
+    const result = TimezoneSchema.safeParse(zone);
+    if (!result.success) {
+      throw new Error('Invalid timezone');
+    }
     return new Zeit(zone);
   }
 
@@ -86,7 +90,12 @@ export class Zeit {
    * Creates a new Zeit instance.
    * @param timezone The timezone for this Zeit instance.
    */
-  constructor(private timezone: z.infer<typeof TimezoneSchema>) {}
+  constructor(private timezone: z.infer<typeof TimezoneSchema>) {
+    const result = TimezoneSchema.safeParse(timezone);
+    if (!result.success) {
+      throw new Error('Invalid timezone');
+    }
+  }
 
   /**
    * Creates a UserZeit instance representing the current time in the specified timezone.
@@ -109,11 +118,23 @@ export class Zeit {
      * - therefore we need to remove the timezone information if present
      * - if the timezone information is present, we will build the wrong time
      */
-    if (typeof zeit === 'string') zeit = Zeit.removeTimezoneInformation(zeit);
+    if (typeof zeit === 'string') {
+      zeit = Zeit.removeTimezoneInformation(zeit);
+    }
 
-    if (zeit instanceof Date) zeit = this.fromDate(zeit).toISO()!;
+    if (zeit instanceof Date) {
+      if (isNaN(zeit.getTime())) {
+        throw new Error('Invalid date');
+      }
+      zeit = this.fromDate(zeit).toISO()!;
+    }
 
-    return new UserZeit(this.getLuxonDateTime(zeit, this.timezone));
+    const dateTime = this.getLuxonDateTime(zeit, this.timezone);
+    if (!dateTime.isValid) {
+      throw new Error('Invalid date');
+    }
+
+    return new UserZeit(dateTime);
   }
 
   /**
@@ -156,6 +177,10 @@ export class Zeit {
    * @private
    */
   private getLuxonDateTime(date: ZeitSchema, timezone: z.infer<typeof TimezoneSchema>): DateTime {
-    return DateTime.fromISO(date, { zone: timezone });
+    const dateTime = DateTime.fromISO(date, { zone: timezone });
+    if (!dateTime.isValid) {
+      throw new Error('Invalid date');
+    }
+    return dateTime;
   }
 }

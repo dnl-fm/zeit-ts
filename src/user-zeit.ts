@@ -125,9 +125,33 @@ export class UserZeit {
    * Sets specified components of the date/time.
    * @param values - An object containing the components to set and their values.
    * @returns This UserZeit instance for method chaining.
+   * @throws {Error} If any of the date components are invalid.
    */
   set(values: DateObjectUnits): UserZeit {
-    this.dateTime = this.getZeit().set(values);
+    // Validate date components before passing to Luxon
+    if (values.month !== undefined && (values.month < 1 || values.month > 12)) {
+      throw new Error('Invalid date');
+    }
+    if (values.day !== undefined && (values.day < 1 || values.day > 31)) {
+      throw new Error('Invalid date');
+    }
+    if (values.hour !== undefined && (values.hour < 0 || values.hour > 23)) {
+      throw new Error('Invalid date');
+    }
+    if (values.minute !== undefined && (values.minute < 0 || values.minute > 59)) {
+      throw new Error('Invalid date');
+    }
+    if (values.second !== undefined && (values.second < 0 || values.second > 59)) {
+      throw new Error('Invalid date');
+    }
+
+    const newDateTime = this.getZeit().set(values);
+    if (!newDateTime.isValid) {
+      throw new Error('Invalid date');
+    }
+
+    this.dateTime = newDateTime;
+
     return this;
   }
 
