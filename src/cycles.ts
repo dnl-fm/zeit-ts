@@ -8,14 +8,8 @@ import type { ZeitPeriod, ZeitSchema } from './zeit.ts';
  */
 export class Cycles {
   /**
-   * Creates a new Cycles instance.
-   * @param periods - An array of Period objects representing the time cycles.
-   */
-  constructor(private periods: ZeitPeriod[]) {}
-
-  /**
    * Creates a new Cycles instance from an array of periods.
-   * @param periods - An array of Period objects.
+   * @param periods - An array of ZeitPeriod objects.
    * @returns A new Cycles instance.
    */
   static fromPeriods(periods: ZeitPeriod[]): Cycles {
@@ -23,11 +17,54 @@ export class Cycles {
   }
 
   /**
-   * Retrieves all periods in this Cycles instance.
-   * @returns An array of Period objects.
+   * Creates a new Cycles instance.
+   * @param periods - An array of ZeitPeriod objects.
+   */
+  constructor(private periods: ZeitPeriod[]) {}
+
+  /**
+   * Gets all periods in this Cycles instance.
+   * @returns An array of ZeitPeriod objects.
    */
   getPeriods(): ZeitPeriod[] {
     return this.periods;
+  }
+
+  /**
+   * Gets the first period in this Cycles instance.
+   * @returns The first ZeitPeriod object.
+   */
+  getFirstPeriod(): ZeitPeriod {
+    return this.periods[0];
+  }
+
+  /**
+   * Gets the last period in this Cycles instance.
+   * @returns The last ZeitPeriod object.
+   */
+  getLastPeriod(): ZeitPeriod {
+    return this.periods[this.periods.length - 1];
+  }
+
+  /**
+   * Gets the period that contains the specified date.
+   * @param zeit - The date to find the period for.
+   * @returns The matching ZeitPeriod object, or undefined if no period contains the date.
+   */
+  getPeriodByZeit(zeit: ZeitSchema): ZeitPeriod | undefined {
+    const userZeit = this.getUserZeit(zeit);
+    return this.periods.find((period) => {
+      return period.startsAt.isSameOrBefore(userZeit) && period.endsAt.isSameOrAfter(userZeit);
+    });
+  }
+
+  /**
+   * Gets the period at the specified index.
+   * @param index - The index of the period to get.
+   * @returns The ZeitPeriod object at the specified index.
+   */
+  getPeriodByIndex(index: number): ZeitPeriod {
+    return this.periods[index];
   }
 
   /**
@@ -36,30 +73,6 @@ export class Cycles {
    */
   getNumberOfPeriods(): number {
     return this.periods.length;
-  }
-
-  /**
-   * Retrieves the first period in this Cycles instance.
-   * @returns The first Period object.
-   * @throws {Error} If there are no periods in the Cycles instance.
-   */
-  getFirstPeriod(): ZeitPeriod {
-    if (this.periods.length === 0) {
-      throw new Error('No periods in Cycles');
-    }
-    return this.periods[0];
-  }
-
-  /**
-   * Retrieves the last period in this Cycles instance.
-   * @returns The last Period object.
-   * @throws {Error} If there are no periods in the Cycles instance.
-   */
-  getLastPeriod(): ZeitPeriod {
-    if (this.periods.length === 0) {
-      throw new Error('No periods in Cycles');
-    }
-    return this.periods[this.periods.length - 1];
   }
 
   /**

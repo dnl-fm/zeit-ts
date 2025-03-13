@@ -92,11 +92,21 @@ export class UserZeit {
     return this.dateTime.toFormat(format);
   }
 
+  /**
+   * Sets the DateTime to the start of the specified unit.
+   * @param unit - The unit to set the start of (e.g., 'year', 'month', 'day').
+   * @returns This UserZeit instance for method chaining.
+   */
   startOf(unit: DateTimeUnit): UserZeit {
     this.dateTime = this.dateTime.startOf(unit);
     return this;
   }
 
+  /**
+   * Sets the DateTime to the end of the specified unit.
+   * @param unit - The unit to set the end of (e.g., 'year', 'month', 'day').
+   * @returns This UserZeit instance for method chaining.
+   */
   endOf(unit: DateTimeUnit): UserZeit {
     this.dateTime = this.dateTime.endOf(unit);
     return this;
@@ -285,9 +295,23 @@ export class UserZeit {
   }
 
   /**
+   * Gets the current DateTime, either from the stored 'now' value or creates a new one.
+   * @returns A UserZeit object representing the current time in the user's timezone.
+   * @throws {Error} If the resulting date is invalid.
+   * @private
+   */
+  private getNow(): UserZeit {
+    const nowZeit = UserZeit.fromNow(this.getTimezone(), this.now);
+    assertEquals(nowZeit.isValid(), true, 'Invalid date');
+    return nowZeit;
+  }
+
+  /**
    * Generates cycles starting from this UserZeit.
    * @param numberOfCycles - The number of cycles to generate.
    * @param options - Options for cycle generation.
+   * @param options.interval - The interval between cycles ('MONTHLY' or 'YEARLY').
+   * @param options.startZeit - Optional start date for the cycles.
    * @returns A new Cycles instance containing the generated cycles.
    */
   cycles(numberOfCycles: number, options: { interval: ZeitInterval; startZeit?: UserZeit } = { interval: 'MONTHLY' }): Cycles {
@@ -307,6 +331,7 @@ export class UserZeit {
    * @param startZeit - The start date for cycle generation.
    * @param numberOfCycles - The number of cycles to generate.
    * @param options - Options for cycle generation.
+   * @param options.interval - The interval between cycles ('MONTHLY' or 'YEARLY').
    * @returns A new Cycles instance.
    */
   cyclesFrom(startZeit: UserZeit, numberOfCycles: number, options: { interval: ZeitInterval } = { interval: 'MONTHLY' }): Cycles {
@@ -317,6 +342,7 @@ export class UserZeit {
    * Generates cycles starting from this UserZeit until a specified end date.
    * @param endZeit - The end date for cycle generation.
    * @param options - Options for cycle generation.
+   * @param options.interval - The interval between cycles ('MONTHLY' or 'YEARLY').
    * @returns A new Cycles instance.
    */
   cyclesUntil(endZeit: UserZeit, options: { interval: ZeitInterval } = { interval: 'MONTHLY' }): Cycles {
@@ -443,17 +469,5 @@ export class UserZeit {
     const newZeit = interval === 'MONTHLY' ? userZeit.plus({ months: iteration }) : userZeit.plus({ years: iteration });
     assert(newZeit.isValid(), 'Invalid date');
     return newZeit;
-  }
-
-  /**
-   * Gets the current DateTime, either from the stored 'now' value or creates a new one.
-   * @returns A UserZeit object representing the current time in the user's timezone.
-   * @throws {Error} If the resulting date is invalid.
-   * @private
-   */
-  private getNow(): UserZeit {
-    const nowZeit = UserZeit.fromNow(this.getTimezone(), this.now);
-    assertEquals(nowZeit.isValid(), true, 'Invalid date');
-    return nowZeit;
   }
 }
