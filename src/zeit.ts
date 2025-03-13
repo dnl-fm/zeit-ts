@@ -6,8 +6,55 @@ import { Timezone, type TimezoneSchema } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
 
 const dateTimeStringSchema: z.ZodType<string> = z.string().datetime();
+
+/**
+ * Represents a valid ISO 8601 datetime string.
+ * This type is inferred from the Zod schema that validates datetime strings.
+ *
+ * @example
+ * ```typescript
+ * const validDateTime: ZeitSchema = "2024-03-15T14:30:00.000Z";
+ * const validLocalDateTime: ZeitSchema = "2024-03-15T14:30:00.000";
+ * ```
+ */
 export type ZeitSchema = z.infer<typeof dateTimeStringSchema>;
-export type ZeitPeriod = { startsAt: UserZeit; endsAt: UserZeit; durationInDays: number };
+
+/**
+ * Represents a time period with start and end dates.
+ * Used for defining subscription cycles, billing periods, or any other time-bound intervals.
+ *
+ * @property startsAt - The UserZeit instance representing the start of the period
+ * @property endsAt - The UserZeit instance representing the end of the period
+ * @property durationInDays - The duration of the period in days
+ *
+ * @example
+ * ```typescript
+ * const period: ZeitPeriod = {
+ *   startsAt: new UserZeit(...),
+ *   endsAt: new UserZeit(...),
+ *   durationInDays: 30
+ * };
+ * ```
+ */
+export type ZeitPeriod = {
+  startsAt: UserZeit;
+  endsAt: UserZeit;
+  durationInDays: number;
+};
+
+/**
+ * Defines the supported interval types for Zeit cycles.
+ * Used to specify the frequency of recurring periods like subscription or billing cycles.
+ *
+ * @example
+ * ```typescript
+ * // Monthly subscription cycle
+ * const interval: ZeitInterval = 'MONTHLY';
+ *
+ * // Annual billing cycle
+ * const billingInterval: ZeitInterval = 'YEARLY';
+ * ```
+ */
 export type ZeitInterval = 'MONTHLY' | 'YEARLY';
 
 /**

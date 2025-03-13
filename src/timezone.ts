@@ -1,7 +1,21 @@
+/**
+ * @module Timezone
+ * This module provides a comprehensive list of IANA time zones and validation utilities.
+ */
+
 import { z } from 'zod';
 
 /**
  * An object containing all supported IANA time zones, organized by continent/region.
+ * Each timezone is represented by its IANA timezone identifier (e.g., 'America/New_York').
+ *
+ * @example
+ * ```typescript
+ * // Using a timezone
+ * const nyTimezone = Timezone.America.New_York;  // 'America/New_York'
+ * const tokyoTimezone = Timezone.Asia.Tokyo;     // 'Asia/Tokyo'
+ * const utcTimezone = Timezone.UTC;              // 'UTC'
+ * ```
  */
 export const Timezone = {
   Africa: {
@@ -386,6 +400,20 @@ export const Timezone = {
 /**
  * A Zod schema for validating time zone strings.
  * It ensures that only valid time zones from the Timezone object are accepted.
+ * This schema is used for runtime validation of timezone values.
+ *
+ * @example
+ * ```typescript
+ * // Validating a timezone string
+ * const result = TimezoneSchema.safeParse('America/New_York');
+ * if (result.success) {
+ *   // Valid timezone
+ *   const timezone = result.data;
+ * } else {
+ *   // Invalid timezone
+ *   console.error(result.error);
+ * }
+ * ```
  */
 export const TimezoneSchema: z.ZodType<string> = z.union([
   // Africa
@@ -760,4 +788,17 @@ export const TimezoneSchema: z.ZodType<string> = z.union([
   z.literal(Timezone.UTC),
 ]);
 
+/**
+ * Type representing all valid IANA timezone strings.
+ * This type is inferred from the TimezoneSchema and provides type safety
+ * when working with timezone strings in TypeScript.
+ *
+ * @example
+ * ```typescript
+ * function setUserTimezone(timezone: Timezone) {
+ *   // TypeScript will ensure only valid timezones are passed
+ *   // ...
+ * }
+ * ```
+ */
 export type Timezone = z.infer<typeof TimezoneSchema>;
