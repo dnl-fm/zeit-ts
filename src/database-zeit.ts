@@ -1,6 +1,6 @@
 import { assert } from 'assert/assert';
 import type { DateObjectUnits, DurationLike } from 'npm:@types/luxon@3';
-import { DateTime } from './luxon-proxy.ts';
+import type { DateTime } from './luxon-proxy.ts';
 import { Timezone } from './timezone.ts';
 import { UserZeit } from './user-zeit.ts';
 

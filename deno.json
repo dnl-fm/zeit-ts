@@ -18,11 +18,12 @@
   },
   "lint": {
     "include": [
-      "src/"
+      "./"
     ],
     "rules": {
       "tags": [
-        "recommended"
+        "recommended",
+        "jsr"
       ]
     }
   },

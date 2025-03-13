@@ -18,7 +18,7 @@ export class UserZeit {
    * @param now - Optional DateTime object representing the current time.
    * @returns A new UserZeit instance.
    */
-  static fromNow(timezone: Timezone, now?: DateTime) {
+  static fromNow(timezone: Timezone, now?: DateTime): UserZeit {
     if (!now) now = DateTime.now();
     return new UserZeit(now.setZone(timezone), now);
   }
@@ -71,7 +71,7 @@ export class UserZeit {
    * Clones the UserZeit instance.
    * @returns A new UserZeit instance with the same date and timezone.
    */
-  clone() {
+  clone(): UserZeit {
     return new UserZeit(this.dateTime, this.now);
   }
 
@@ -79,7 +79,7 @@ export class UserZeit {
    * Checks if the DateTime is valid.
    * @returns True if the DateTime is valid, false otherwise.
    */
-  isValid() {
+  isValid(): boolean {
     return this.dateTime.isValid;
   }
 
@@ -88,16 +88,16 @@ export class UserZeit {
    * @param format - The format string to use for formatting.
    * @returns The formatted date/time string.
    */
-  format(format: string) {
+  format(format: string): string {
     return this.dateTime.toFormat(format);
   }
 
-  startOf(unit: DateTimeUnit) {
+  startOf(unit: DateTimeUnit): UserZeit {
     this.dateTime = this.dateTime.startOf(unit);
     return this;
   }
 
-  endOf(unit: DateTimeUnit) {
+  endOf(unit: DateTimeUnit): UserZeit {
     this.dateTime = this.dateTime.endOf(unit);
     return this;
   }
