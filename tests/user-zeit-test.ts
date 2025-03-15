@@ -213,6 +213,20 @@ Deno.test('UserZeit - nextCycle with now option', () => {
   assertEquals(nextYearlyCycle.endsAt.toISODate(), '2025-05-15', 'end yearly');
 });
 
+Deno.test('UserZeit - nextCycle with start/now on the same day', () => {
+  const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
+  const now = userZeit.clone();
+
+  // Test nextCycle with startsAt option
+  const nextCycleWithStart = userZeit.nextCycle('MONTHLY', now);
+  assertEquals(nextCycleWithStart.startsAt.toISODate(), '2023-06-15', 'start monthly');
+  assertEquals(nextCycleWithStart.endsAt.toISODate(), '2023-07-15', 'end monthly');
+
+  const nextCycleWithStartYearly = userZeit.nextCycle('YEARLY', now);
+  assertEquals(nextCycleWithStartYearly.startsAt.toISODate(), '2024-05-15', 'start yearly');
+  assertEquals(nextCycleWithStartYearly.endsAt.toISODate(), '2025-05-15', 'end yearly');
+});
+
 Deno.test('UserZeit - previousCycle with now option', () => {
   const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
   const startDateMonthly = userZoneZeit.fromUser('2023-07-10T12:00:00.000Z');
@@ -227,6 +241,21 @@ Deno.test('UserZeit - previousCycle with now option', () => {
   const nextYearlyCycle = userZeit.previousCycle('YEARLY', startDateYearly);
   assertEquals(nextYearlyCycle.startsAt.toISODate(), '2023-05-15', 'start yearly');
   assertEquals(nextYearlyCycle.endsAt.toISODate(), '2024-05-15', 'end yearly');
+});
+
+Deno.test('UserZeit - previousCycle with start/now on the same day', () => {
+  const userZeit = userZoneZeit.fromUser('2023-05-15T12:00:00.000Z');
+  const now = userZeit.clone();
+
+  // Test nextCycle with startsAt option
+  const nextCycleWithStart = userZeit.previousCycle('MONTHLY', now);
+  assertEquals(nextCycleWithStart.startsAt.toISODate(), '2023-04-15', 'start monthly');
+  assertEquals(nextCycleWithStart.endsAt.toISODate(), '2023-05-15', 'end monthly');
+
+  // Test with YEARLY interval
+  const nextYearlyCycle = userZeit.previousCycle('YEARLY', now);
+  assertEquals(nextYearlyCycle.startsAt.toISODate(), '2022-05-15', 'start yearly');
+  assertEquals(nextYearlyCycle.endsAt.toISODate(), '2023-05-15', 'end yearly');
 });
 
 const startDate = DateTime.fromISO("2024-05-13T17:31:00", { zone: userZone });
